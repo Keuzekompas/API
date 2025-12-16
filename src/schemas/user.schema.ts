@@ -3,7 +3,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
 
 @Schema()
 export class User {
@@ -11,7 +10,7 @@ export class User {
   password: string;
 
   @Prop({ required: true, unique: true })
-  studentNumber: string;
+  studentNumber: number;
 
   @Prop({ required: true, unique: true })
   email: string;
