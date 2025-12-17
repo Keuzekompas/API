@@ -12,7 +12,14 @@ export const databaseProviders = [
             throw new Error('MONGODB_URI is not defined');
         }
         console.log('Connecting to MongoDB...');
-        return await mongoose.connect(uri);
+        mongoose.set('strictQuery', true);
+        return await mongoose.connect(uri, {
+            dbName: 'KeuzeKompas',
+            serverSelectionTimeoutMS: 5000,
+            socketTimeoutMS: 30000,
+            autoIndex: false,
+            tls: true,
+      });
       } catch (error) {
         console.error('Database connection error:', error);
         throw error;
