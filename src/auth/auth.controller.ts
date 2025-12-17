@@ -5,11 +5,11 @@ import { createJsonResponse, JsonResponse } from '../utils/json-response';
 import { AuthDto } from './dtos/auth.dto';
 import { LoginResponse } from './auth.interface';
 
-@Controller('api/login')
+@Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post()
+  @Post('/login')
   @HttpCode(200)
   async login(
     @Body() authDto: AuthDto,

@@ -6,7 +6,7 @@ import { createJsonResponse, JsonResponse } from '../utils/json-response';
 import { UserService } from './user.service';
 import { UserInterface } from './user.interface';
 
-@Controller('api/user')
+@Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
