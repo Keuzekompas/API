@@ -11,6 +11,6 @@ dotenv.config();
 @Module({
   imports: [UserModule, AuthModule],
   controllers: [AppController],
-  providers: [AppService, ...databaseProviders],
+  providers: [AppService],
 })
 export class AppModule {}
