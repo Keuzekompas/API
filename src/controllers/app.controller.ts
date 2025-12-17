@@ -1,9 +1,13 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Inject } from '@nestjs/common';
 import { AppService } from '../services/app.service';
+import { Mongoose } from 'mongoose';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(
+    private readonly appService: AppService,
+    @Inject('DATABASE_CONNECTION') private readonly mongoose: Mongoose,
+  ) {}
 
   @Get()
   getHello(): string {
