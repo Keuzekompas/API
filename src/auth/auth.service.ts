@@ -1,13 +1,16 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable, Inject } from '@nestjs/common';
 import { UserRepository } from '../user/user.repository';
 import { UserDocument } from '../user/user.schema';
-import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { Model } from 'mongoose';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly userRepository: UserRepository,
+  constructor(
+    private readonly userRepository: UserRepository,
     @Inject('USER_MODEL') private userModel: Model<UserDocument>,
   ) {}
 
