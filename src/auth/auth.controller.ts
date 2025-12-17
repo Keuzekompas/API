@@ -1,9 +1,9 @@
 import { Controller, Post, HttpCode, Body } from '@nestjs/common';
-import { AuthService } from '../services/auth.service';
-import { handleError } from '../../utils/error-handler';
-import { createJsonResponse, JsonResponse } from '../../utils/json-response';
-import { AuthDto } from '../dtos/auth.dto';
-import { User } from '../../user/user.schema';
+import { AuthService } from './auth.service';
+import { handleError } from '../utils/error-handler';
+import { createJsonResponse, JsonResponse } from '../utils/json-response';
+import { AuthDto } from './dtos/auth.dto';
+import { User } from '../user/user.schema';
 
 @Controller('api/login')
 export class AuthController {
@@ -15,9 +15,9 @@ export class AuthController {
     try {
       const user = await this.authService.login(
         authDto.email,
-        authDto.passwordHash,
+        authDto.password,
       );
-      return createJsonResponse(200, 'Login succesvol', user);
+      return createJsonResponse(200, 'Login succesvol', user); //Add JWT Token later
     } catch (error) {
       handleError(error, 'AuthController.login');
       return createJsonResponse(401, 'Ongeldige inloggegevens', null);

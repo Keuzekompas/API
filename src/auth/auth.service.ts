@@ -1,12 +1,16 @@
-import { Injectable } from '@nestjs/common';
-import { UserRepository } from '../../user/user.repository';
-import { UserDocument } from '../../user/user.schema';
+import { Injectable, Inject } from '@nestjs/common';
+import { UserRepository } from '../user/user.repository';
+import { UserDocument } from '../user/user.schema';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { Model } from 'mongoose';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly userRepository: UserRepository) {}
+  constructor(private readonly userRepository: UserRepository,
+    @Inject('USER_MODEL') private userModel: Model<UserDocument>,
+  ) {}
+
   async login(email: string, password: string): Promise<UserDocument> {
     const user = await this.userRepository.findByEmail(email);
     const passwordMatch = user
@@ -15,6 +19,6 @@ export class AuthService {
     if (!user || !passwordMatch) {
       throw new Error('Invalid email or password');
     }
-    return user;
+    return user; // Add JWT token later
   }
 }
