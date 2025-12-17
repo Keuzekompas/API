@@ -5,10 +5,11 @@ import { databaseProviders } from './database/database.providers';
 import { UserModule } from './user/modules/user.module';
 
 import * as dotenv from 'dotenv';
+import { ModulesModule } from './modules/modules.module';
 dotenv.config();
 
 @Module({
-  imports: [UserModule],
+  imports: [UserModule, ModulesModule],
   controllers: [AppController],
   providers: [AppService, ...databaseProviders],
 })
