@@ -3,8 +3,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Controller, Get, HttpCode, Request } from '@nestjs/common';
 import { UserService } from '../services/user.service';
-import { User } from '../schemas/user.schema';
 import { handleError } from '../utils/error-handler';
+import { UserInterface } from '../interfaces/user.interface';
 
 @Controller('api/user')
 export class UserController {
@@ -12,7 +12,7 @@ export class UserController {
 
   @Get('profile')
   @HttpCode(200)
-  async getProfile(@Request() req): Promise<User | null> {
+  async getProfile(@Request() req): Promise<UserInterface | null> {
     try {
       const userId = req.user?.userId;
       if (!userId) return null;
