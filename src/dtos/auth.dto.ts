@@ -1,0 +1,26 @@
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsString,
+  MinLength,
+  MaxLength,
+  Matches,
+} from 'class-validator';
+import { Transform } from 'class-transformer';
+
+export class AuthDto {
+  @IsEmail()
+  @IsNotEmpty({ message: 'Email should not be empty' })
+  @MaxLength(255, { message: 'Email must not exceed 255 characters' })
+  @Matches(/^[a-zA-Z0-9._%+-]+@student\.avans\.nl$/, {
+    message: 'Email must be an Avans student email (@student.avans.nl)',
+  })
+  @Transform(({ value }) => value.toLowerCase().trim())
+  email: string;
+
+  @IsString()
+  @IsNotEmpty({ message: 'Password should not be empty' })
+  @MinLength(8, { message: 'Password must be at least 8 characters long' })
+  @MaxLength(128, { message: 'Password must not exceed 128 characters' })
+  passwordHash: string;
+}
