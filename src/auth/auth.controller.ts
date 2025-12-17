@@ -3,7 +3,6 @@ import { AuthService } from './auth.service';
 import { handleError } from '../utils/error-handler';
 import { createJsonResponse, JsonResponse } from '../utils/json-response';
 import { AuthDto } from './dtos/auth.dto';
-import { User } from '../user/user.schema';
 
 @Controller('api/login')
 export class AuthController {
@@ -11,13 +10,13 @@ export class AuthController {
 
   @Post()
   @HttpCode(200)
-  async login(@Body() authDto: AuthDto): Promise<JsonResponse<User | null>> {
+  async login(@Body() authDto: AuthDto): Promise<JsonResponse<any>> {
     try {
-      const user = await this.authService.login(
+      const response = await this.authService.login(
         authDto.email,
         authDto.password,
       );
-      return createJsonResponse(200, 'Login succesvol', user); //Add JWT Token later
+      return createJsonResponse(200, 'Login succesvol', response); //Add JWT Token later
     } catch (error) {
       handleError(error, 'AuthController.login');
       return createJsonResponse(401, 'Ongeldige inloggegevens', null);
