@@ -1,7 +1,7 @@
 export interface JsonResponse<T> {
   status: number;
   message: string;
-  data: T | null;
+  data: T | Record<string, never>;
 }
 
 export function createJsonResponse<T>(
@@ -9,5 +9,9 @@ export function createJsonResponse<T>(
   message: string,
   data: T | null,
 ): JsonResponse<T> {
-  return { status, message, data };
+  return {
+    status,
+    message,
+    data: data === null || data === undefined ? {} : data,
+  };
 }
