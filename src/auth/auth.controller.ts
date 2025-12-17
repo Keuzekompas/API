@@ -3,6 +3,7 @@ import { AuthService } from './auth.service';
 import { handleError } from '../utils/error-handler';
 import { createJsonResponse, JsonResponse } from '../utils/json-response';
 import { AuthDto } from './dtos/auth.dto';
+import { LoginResponse } from './auth.interface';
 
 @Controller('api/login')
 export class AuthController {
@@ -10,7 +11,9 @@ export class AuthController {
 
   @Post()
   @HttpCode(200)
-  async login(@Body() authDto: AuthDto): Promise<JsonResponse<any>> {
+  async login(
+    @Body() authDto: AuthDto,
+  ): Promise<JsonResponse<LoginResponse | null>> {
     try {
       const response = await this.authService.login(
         authDto.email,

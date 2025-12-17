@@ -2,6 +2,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { Model } from 'mongoose';
 import { UserDocument } from './user.schema';
 import { UserInterface } from './user.interface';
+import { LoginResponse } from 'src/auth/auth.interface';
 
 @Injectable()
 export class UserRepository {
@@ -19,6 +20,10 @@ export class UserRepository {
   }
 
   async findByEmail(email: string): Promise<UserDocument | null> {
-    return this.userModel.findOne({ email }).exec();
+    return this.userModel
+      .findOne({ email })
+      .select('+email +id')
+      .lean<UserDocument>()
+      .exec();
   }
 }

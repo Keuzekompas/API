@@ -4,6 +4,7 @@ import { UserDocument } from '../user/user.schema';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { Model } from 'mongoose';
+import { LoginResponse } from './auth.interface';
 
 @Injectable()
 export class AuthService {
@@ -13,10 +14,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async login(
-    email: string,
-    password: string,
-  ): Promise<{ user: UserDocument; token: string }> {
+  async login(email: string, password: string): Promise<LoginResponse> {
     const user = await this.userRepository.findByEmail(email);
     const passwordMatch = user
       ? await bcrypt.compare(password, user.password)
@@ -27,6 +25,12 @@ export class AuthService {
     if (!user || !passwordMatch) {
       throw new Error('Invalid email or password');
     }
-    return { user, token };
+
+    const userResponse = {
+      id: user._id.toString(),
+      email: user.email,
+      // add other properties if needed
+    };
+    return { user: userResponse, token };
   }
 }
