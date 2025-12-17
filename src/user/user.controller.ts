@@ -1,8 +1,6 @@
 import { Controller, Get, HttpCode, Request } from '@nestjs/common';
-
 import { handleError } from '../utils/error-handler';
 import { createJsonResponse, JsonResponse } from '../utils/json-response';
-
 import { UserService } from './user.service';
 import { UserInterface } from './user.interface';
 
