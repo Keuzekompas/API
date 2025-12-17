@@ -8,7 +8,7 @@ import { UserInterface } from 'src/user/user.interface';
 export class UserService {
   constructor(
     private readonly userRepository: UserRepository,
-    @Inject('USER_MODEL') private userModel: Model<UserDocument>,
+    @Inject('USER_MODEL') private readonly userModel: Model<UserDocument>,
   ) {}
 
   async findById(id: string): Promise<UserInterface | null> {
