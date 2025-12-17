@@ -1,19 +1,19 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
 
 @Schema()
 export class Module {
-  name_en: String;
-  description_en: String;
-  studycredit: Number;
-  location: String;
-  level: String;
-  module_tags_en: [String];
+  name_en: string;
+  description_en: string;
+  studycredit: number;
+  location: string;
+  level: string;
+  module_tags_en: [string];
   start_date: Date;
-  available_spots: Number;
-  name_nl: String;
-  description_nl: String;
-  module_tags_nl: [String];
+  available_spots: number;
+  name_nl: string;
+  description_nl: string;
+  module_tags_nl: [string];
 }
 
 export type SchemaDocument = HydratedDocument<Module>;
