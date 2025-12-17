@@ -1,5 +1,5 @@
 import { Controller, Get, Inject } from '@nestjs/common';
-import { AppService } from '../services/app.service';
+import { AppService } from './app.service';
 import { Mongoose } from 'mongoose';
 
 @Controller()

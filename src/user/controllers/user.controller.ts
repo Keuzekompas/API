@@ -3,9 +3,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Controller, Get, HttpCode, Request } from '@nestjs/common';
 import { UserService } from '../services/user.service';
-import { handleError } from '../utils/error-handler';
+import { handleError } from '../../utils/error-handler';
 import { UserInterface } from '../interfaces/user.interface';
-import { createJsonResponse, JsonResponse } from '../utils/json-response';
+import { createJsonResponse, JsonResponse } from '../../utils/json-response';
 
 @Controller('api/user')
 export class UserController {
