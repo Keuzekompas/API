@@ -21,7 +21,7 @@ export class AuthController {
         authDto.email,
         authDto.password,
       );
-      return createJsonResponse(200, 'Login succesvol', response); //Add JWT Token later
+      return createJsonResponse(200, 'Login succesvol', response);
     } catch (error) {
       handleError(error, 'AuthController.login');
       return createJsonResponse(401, 'Ongeldige inloggegevens', null);
