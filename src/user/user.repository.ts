@@ -22,7 +22,7 @@ export class UserRepository {
   async findByEmail(email: string): Promise<UserDocument | null> {
     return this.userModel
       .findOne({ email })
-      .select('+email +id')
+      .select('+id')
       .lean<UserDocument>()
       .exec();
   }

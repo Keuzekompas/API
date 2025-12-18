@@ -7,7 +7,11 @@ import { userProviders } from 'src/user/user.providers';
 import { JwtModule } from '@nestjs/jwt';
 
 @Module({
-  imports: [DatabaseModule, JwtModule],
+  imports: [DatabaseModule,
+    JwtModule.register({
+      secret: process.env.JWT_SECRET,
+      signOptions: { expiresIn: '1h' },
+    }),],
   controllers: [AuthController],
   providers: [AuthService, UserRepository, ...userProviders],
 })

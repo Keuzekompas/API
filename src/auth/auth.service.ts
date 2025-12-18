@@ -19,17 +19,14 @@ export class AuthService {
     const passwordMatch = user
       ? await bcrypt.compare(password, user.password)
       : false;
-
-    const token = 'kijken of jij meestuurt';
-    // this.jwtService.sign({ email: user?.email });
-    if (!user || !passwordMatch) {
+    
+      if (!user || !passwordMatch) {
       throw new Error('Invalid email or password');
     }
-
+    
+    const token = this.jwtService.sign({ userId: user?._id.toString() });
     const userResponse = {
-      id: user._id.toString(),
-      email: user.email,
-      // add other properties if needed
+      id: user._id.toString()
     };
     return { user: userResponse, token };
   }
