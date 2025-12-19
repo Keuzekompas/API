@@ -19,6 +19,10 @@ export class UserRepository {
   }
 
   async findByEmail(email: string): Promise<UserDocument | null> {
-    return this.userModel.findOne({ email }).exec();
+    return this.userModel
+      .findOne({ email })
+      .select('+id')
+      .lean<UserDocument>()
+      .exec();
   }
 }

@@ -1,26 +1,43 @@
-import { Controller, Post, HttpCode, Body } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  HttpCode,
+  Body,
+  Get,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { handleError } from '../utils/error-handler';
 import { createJsonResponse, JsonResponse } from '../utils/json-response';
 import { AuthDto } from './dtos/auth.dto';
-import { User } from '../user/user.schema';
+import { LoginResponse } from './auth.interface';
+import { AuthGuard } from './auth.guard';
 
-@Controller('api/login')
+@Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post()
+  @Post('/login')
   @HttpCode(200)
-  async login(@Body() authDto: AuthDto): Promise<JsonResponse<User | null>> {
+  async login(
+    @Body() authDto: AuthDto,
+  ): Promise<JsonResponse<LoginResponse | null>> {
     try {
-      const user = await this.authService.login(
+      const response = await this.authService.login(
         authDto.email,
         authDto.password,
       );
-      return createJsonResponse(200, 'Login succesvol', user); //Add JWT Token later
+      return createJsonResponse(200, 'Login succesvol', response);
     } catch (error) {
       handleError(error, 'AuthController.login');
       return createJsonResponse(401, 'Ongeldige inloggegevens', null);
     }
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('/status')
+  @HttpCode(200)
+  async status(): Promise<JsonResponse<string>> {
+    return createJsonResponse(200, 'Auth service is running', 'OK');
   }
 }

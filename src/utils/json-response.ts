@@ -12,6 +12,6 @@ export function createJsonResponse<T>(
   return {
     status,
     message,
-    data: data === null || data === undefined ? {} : data,
+    data: data ?? {},
   };
 }
