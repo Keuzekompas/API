@@ -1,6 +1,6 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { Model } from 'mongoose';
-import { Module } from './interfaces/module.interface';
+import { Module } from './module.interface';
 
 @Injectable()
 export class ModulesService {

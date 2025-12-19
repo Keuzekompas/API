@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ModulesService } from '../modules.service';
 import { NotFoundException } from '@nestjs/common';
 import { Model } from 'mongoose';
-import { Module } from '../interfaces/module.interface';
+import { Module } from '../module.interface';
 
 describe('ModulesService', () => {
   let service: ModulesService;
@@ -50,7 +50,7 @@ describe('ModulesService', () => {
     it('should return an array of modules', async () => {
       console.log('Test: ModulesService.findAll - Start');
       const result = [mockModule];
-      
+
       mockModuleModel.find.mockReturnValue({
         exec: jest.fn().mockResolvedValue(result),
       });
@@ -84,7 +84,10 @@ describe('ModulesService', () => {
       try {
         await service.findOne('someId');
       } catch (error) {
-        console.log('Test: ModulesService.findOne (Error) - Caught Error:', error.message);
+        console.log(
+          'Test: ModulesService.findOne (Error) - Caught Error:',
+          error.message,
+        );
         expect(error).toBeInstanceOf(NotFoundException);
       }
       expect(model.findById).toHaveBeenCalledWith('someId');
