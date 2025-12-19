@@ -1,13 +1,17 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Controller, Get, HttpCode, Request } from '@nestjs/common';
+<<<<<<<< HEAD:src/user/controllers/user.controller.ts
 import { UserService } from '../services/user.service';
 import { handleError } from '../../utils/error-handler';
 import { UserInterface } from '../interfaces/user.interface';
 import { createJsonResponse, JsonResponse } from '../../utils/json-response';
+========
+import { handleError } from '../utils/error-handler';
+import { createJsonResponse, JsonResponse } from '../utils/json-response';
+import { UserService } from './user.service';
+import { UserInterface } from './user.interface';
+>>>>>>>> 100b4043cac0087e7763fe51945248ed8e4c21b0:src/user/user.controller.ts
 
-@Controller('api/user')
+@Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 

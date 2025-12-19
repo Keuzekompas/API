@@ -6,7 +6,11 @@ import { Module } from './interfaces/module.interface';
 export class ModulesService {
   constructor(
     @Inject('MODULE_MODEL')
+<<<<<<< HEAD
     private moduleModel: Model<Module>,
+=======
+    private readonly moduleModel: Model<Module>,
+>>>>>>> 100b4043cac0087e7763fe51945248ed8e4c21b0
   ) {}
 
   async findAll(): Promise<Module[]> {
