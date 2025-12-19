@@ -10,7 +10,7 @@ import { LoginResponse } from './auth.interface';
 export class AuthService {
   constructor(
     private readonly userRepository: UserRepository,
-    @Inject('USER_MODEL') private userModel: Model<UserDocument>,
+    @Inject('USER_MODEL') private readonly userModel: Model<UserDocument>,
     private readonly jwtService: JwtService,
   ) {}
 

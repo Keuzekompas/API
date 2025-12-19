@@ -2,7 +2,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { Model } from 'mongoose';
 import { UserDocument } from './user.schema';
 import { UserInterface } from './user.interface';
-import { LoginResponse } from 'src/auth/auth.interface';
+
 @Injectable()
 export class UserRepository {
   constructor(
