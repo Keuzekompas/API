@@ -4,6 +4,10 @@ import * as MongoSanitize from 'express-mongo-sanitize';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.enableCors({
+    origin: process.env.CORS_ORIGIN?.split(','),
+    credentials: true,
+  });
 
   app.use((req, res, next) => {
     if (req.body) MongoSanitize.sanitize(req.body);
@@ -13,6 +17,6 @@ async function bootstrap() {
   });
 
   app.setGlobalPrefix('api');
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(process.env.PORT ?? 3080);
 }
 bootstrap();
