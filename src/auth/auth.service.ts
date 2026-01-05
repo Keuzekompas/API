@@ -30,4 +30,8 @@ export class AuthService {
     };
     return { user: userResponse, token };
   }
+
+  async validateUser(userId: string) {
+    return this.userRepository.findById(userId);
+  }
 }

@@ -1,13 +1,15 @@
-import { Controller, Get, HttpCode, Request } from '@nestjs/common';
+import { Controller, Get, HttpCode, Request, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
 import { handleError } from '../utils/error-handler';
 import { UserInterface } from './user.interface';
 import { createJsonResponse, JsonResponse } from '../utils/json-response';
+import { AuthGuard } from '../auth/auth.guard';
 
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  @UseGuards(AuthGuard)
   @Get('profile')
   @HttpCode(200)
   async getProfile(
@@ -16,7 +18,6 @@ export class UserController {
     try {
       const userId = req.user?.userId;
       if (!userId) {
-        // Fix this later with a guard
         return createJsonResponse(401, 'Not logged in', null);
       }
 
