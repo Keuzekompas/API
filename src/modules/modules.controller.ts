@@ -23,9 +23,9 @@ export class ModulesController {
 
   @UseGuards(AuthGuard)  
   @Get(':id')
-  async findOne(@Param('id') id: string): Promise<JsonResponse<Module | null>> {
+  async findOne(@Param('id') id: string, @Query('lang') lang: string = 'en'): Promise<JsonResponse<any | null>> {
     try {
-      const module = await this.modulesService.findOne(id);
+      const module = await this.modulesService.findOne(id, lang);
       if (!module) {
         return createJsonResponse(404, 'Module not found', null);
       }
