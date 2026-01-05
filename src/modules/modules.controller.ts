@@ -1,9 +1,9 @@
 import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { ModulesService } from './modules.service';
-import { Module } from './module.interface';
 import { createJsonResponse, JsonResponse } from '../utils/json-response';
 import { handleError } from '../utils/error-handler';
 import { AuthGuard } from '../auth/auth.guard';
+import { ModuleListDto, ModuleDetailDto } from './dtos/module-response.dto';
 
 @Controller('modules')
 export class ModulesController {
@@ -11,7 +11,7 @@ export class ModulesController {
 
   @UseGuards(AuthGuard)
   @Get()
-  async findAll(@Query('lang') lang: string = 'en'): Promise<JsonResponse<any[] | null>> {
+  async findAll(@Query('lang') lang: string = 'en'): Promise<JsonResponse<ModuleListDto[] | null>> {
     try {
       const modules = await this.modulesService.findAll(lang);
       return createJsonResponse(200, 'Modules successfully retrieved', modules);
@@ -23,7 +23,7 @@ export class ModulesController {
 
   @UseGuards(AuthGuard)  
   @Get(':id')
-  async findOne(@Param('id') id: string, @Query('lang') lang: string = 'en'): Promise<JsonResponse<any | null>> {
+  async findOne(@Param('id') id: string, @Query('lang') lang: string = 'en'): Promise<JsonResponse<ModuleDetailDto | null>> {
     try {
       const module = await this.modulesService.findOne(id, lang);
       if (!module) {

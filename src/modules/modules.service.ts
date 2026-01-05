@@ -1,6 +1,7 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { Model } from 'mongoose';
 import { Module } from './module.interface';
+import { ModuleListDto, ModuleDetailDto } from './dtos/module-response.dto';
 
 @Injectable()
 export class ModulesService {
@@ -9,10 +10,10 @@ export class ModulesService {
     private readonly moduleModel: Model<Module>,
   ) {}
 
-  async findAll(lang: string = 'en'): Promise<any[]> {
+  async findAll(lang: string = 'en'): Promise<ModuleListDto[]> {
     const modules = await this.moduleModel.find().exec();
     return modules.map((module) => ({
-      _id: module._id,
+      _id: module._id.toString(),
       name: lang === 'nl' ? module.name_nl : module.name_en,
       description: lang === 'nl' ? module.description_nl : module.description_en,
       studycredit: module.studycredit,
@@ -20,13 +21,13 @@ export class ModulesService {
     }));
   }
 
-  async findOne(id: string, lang: string = 'en'): Promise<any> {
+  async findOne(id: string, lang: string = 'en'): Promise<ModuleDetailDto> {
     const module = await this.moduleModel.findById(id).exec();
     if (!module) {
       throw new NotFoundException(`Module with ID "${id}" not found`);
     }
     return {
-      _id: module._id,
+      _id: module._id.toString(),
       name: lang === 'nl' ? module.name_nl : module.name_en,
       description: lang === 'nl' ? module.description_nl : module.description_en,
       studycredit: module.studycredit,
