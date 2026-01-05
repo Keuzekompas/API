@@ -1,13 +1,11 @@
 import {
   Controller,
   Get,
-  HttpCode,
   NotFoundException,
   Request,
   UnauthorizedException,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { handleError } from '../utils/error-handler';
 import { UserInterface } from './user.interface';
 import { createJsonResponse, JsonResponse } from '../utils/json-response';
 
