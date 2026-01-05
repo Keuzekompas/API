@@ -41,4 +41,16 @@ export class AuthController {
 
     }
   }
+
+  @Post('logout')
+  logout(@Res() res: Response) {
+    // Clear common cookie names used for tokens to be safe
+    res.clearCookie('token', { path: '/' });
+    res.clearCookie('access_token', { path: '/' });
+    // also send an explicit expired cookie for non-Express clients/browsers
+    res.cookie('token', '', { httpOnly: true, maxAge: 0, path: '/' });
+    res.cookie('access_token', '', { httpOnly: true, maxAge: 0, path: '/' });
+
+    return res.status(200).json({ success: true });
+  }
 }
