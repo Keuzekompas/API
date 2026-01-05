@@ -1,6 +1,5 @@
 import { Connection } from 'mongoose';
 import { UserSchema } from './user.schema';
-import { AuthGuard } from 'src/auth/auth.guard';
 
 export const userProviders = [
   {
