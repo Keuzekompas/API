@@ -6,7 +6,6 @@ import { AuthDto } from './dtos/auth.dto';
 import { LoginResponse } from './auth.interface';
 import { AuthGuard } from './auth.guard';
 
-
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -21,13 +20,12 @@ export class AuthController {
         authDto.email,
         authDto.password,
       );
-      return createJsonResponse(200, 'Login succesvol', response);
+      return createJsonResponse(200, 'Login successful', response);
     } catch (error) {
       handleError(error, 'AuthController.login');
-      return createJsonResponse(401, 'Ongeldige inloggegevens', null);
+      return createJsonResponse(401, 'Invalid login credentials', null);
     }
   }
-
 
   @UseGuards(AuthGuard)
   @Get('/status')
