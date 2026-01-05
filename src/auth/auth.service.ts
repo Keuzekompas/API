@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, UnauthorizedException } from '@nestjs/common';
 import { UserRepository } from '../user/user.repository';
 import { UserDocument } from '../user/user.schema';
 import { JwtService } from '@nestjs/jwt';
@@ -21,14 +21,14 @@ export class AuthService {
       : false;
 
     if (!user || !passwordMatch) {
-      throw new Error('Invalid email or password');
+      throw new UnauthorizedException('Ongeldige inloggegevens');
     }
 
-    const token = this.jwtService.sign({ userId: user?._id.toString() });
-    const userResponse = {
-      id: user._id.toString(),
+    const token = this.jwtService.sign({ userId: user._id.toString() });
+    return {
+      user: { id: user._id.toString() },
+      token,
     };
-    return { user: userResponse, token };
   }
 
   async validateUser(userId: string) {
