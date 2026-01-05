@@ -1,7 +1,6 @@
 import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { ModulesService } from './modules.service';
 import { createJsonResponse, JsonResponse } from '../utils/json-response';
-import { handleError } from '../utils/error-handler';
 import { AuthGuard } from '../auth/auth.guard';
 import { ModuleListDto, ModuleDetailDto } from './dtos/module-response.dto';
 
@@ -21,7 +20,7 @@ export class ModulesController {
     }
   }
 
-  @UseGuards(AuthGuard)  
+  @UseGuards(AuthGuard)
   @Get(':id')
   async findOne(@Param('id') id: string, @Query('lang') lang: string = 'en'): Promise<JsonResponse<ModuleDetailDto | null>> {
     try {
@@ -34,5 +33,9 @@ export class ModulesController {
       handleError(error, 'ModulesController.findOne');
       throw error;
     }
+
+    const module = await this.modulesService.findOne(id);
+
+    return createJsonResponse(200, 'Module successfully retrieved', module);
   }
 }

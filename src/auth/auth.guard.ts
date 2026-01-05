@@ -14,16 +14,18 @@ export class AuthGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const token = this.extractTokenFromHeader(request);
+
     if (!token) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException('No token provided');
     }
+
     try {
       const payload = await this.jwtService.verifyAsync(token, {
         secret: process.env.JWT_SECRET,
       });
       request['userId'] = payload;
     } catch {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException('Invalid token or expired');
     }
     return true;
   }
