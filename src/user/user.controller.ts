@@ -1,6 +1,11 @@
-import { Controller, Get, HttpCode, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  NotFoundException,
+  Request,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { UserService } from './user.service';
-import { handleError } from '../utils/error-handler';
 import { UserInterface } from './user.interface';
 import { createJsonResponse, JsonResponse } from '../utils/json-response';
 
@@ -9,26 +14,19 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get('profile')
-  @HttpCode(200)
   async getProfile(
     @Request() req,
   ): Promise<JsonResponse<UserInterface | null>> {
-    try {
-      const userId = req.user?.userId;
-      if (!userId) {
-        // Fix this later with a guard
-        return createJsonResponse(401, 'Not logged in', null);
-      }
-
-      const user = await this.userService.findById(userId);
-      if (!user) {
-        return createJsonResponse(404, 'User not found', null);
-      }
-
-      return createJsonResponse(200, 'User successfully retrieved', user);
-    } catch (error) {
-      handleError(error, 'UserController.getProfile');
-      throw error;
+    const userId = req.user?.userId;
+    if (!userId) {
+      throw new UnauthorizedException('Not logged in');
     }
+
+    const user = await this.userService.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return createJsonResponse(200, 'User successfully retrieved', user);
   }
 }
