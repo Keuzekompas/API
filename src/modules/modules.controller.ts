@@ -3,6 +3,7 @@ import { ModulesService } from './modules.service';
 import { createJsonResponse, JsonResponse } from '../utils/json-response';
 import { AuthGuard } from '../auth/auth.guard';
 import { ModuleListDto, ModuleDetailDto } from './dtos/module-response.dto';
+import { handleError } from '../utils/error-handler';
 
 @Controller('modules')
 export class ModulesController {
