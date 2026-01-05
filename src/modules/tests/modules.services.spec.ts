@@ -47,7 +47,7 @@ describe('ModulesService', () => {
   });
 
   describe('findAll', () => {
-    it('should return an array of modules', async () => {
+    it('should return an array of mapped modules (default en)', async () => {
       console.log('Test: ModulesService.findAll - Start');
       const result = [mockModule];
 
@@ -57,7 +57,37 @@ describe('ModulesService', () => {
 
       const modules = await service.findAll();
       console.log('Test: ModulesService.findAll - Result:', modules);
-      expect(modules).toEqual(result);
+      
+      const expected = [{
+        _id: mockModule['_id'],
+        name: mockModule.name_en,
+        description: mockModule.description_en,
+        studycredit: mockModule.studycredit,
+        location: mockModule.location
+      }];
+
+      expect(modules).toEqual(expected);
+      expect(model.find).toHaveBeenCalled();
+    });
+
+    it('should return an array of mapped modules (nl)', async () => {
+      const result = [mockModule];
+
+      mockModuleModel.find.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(result),
+      });
+
+      const modules = await service.findAll('nl');
+      
+      const expected = [{
+        _id: mockModule['_id'],
+        name: mockModule.name_nl,
+        description: mockModule.description_nl,
+        studycredit: mockModule.studycredit,
+        location: mockModule.location
+      }];
+
+      expect(modules).toEqual(expected);
       expect(model.find).toHaveBeenCalled();
     });
   });

@@ -9,8 +9,15 @@ export class ModulesService {
     private readonly moduleModel: Model<Module>,
   ) {}
 
-  async findAll(): Promise<Module[]> {
-    return this.moduleModel.find().exec();
+  async findAll(lang: string = 'en'): Promise<any[]> {
+    const modules = await this.moduleModel.find().exec();
+    return modules.map((module) => ({
+      _id: module._id,
+      name: lang === 'nl' ? module.name_nl : module.name_en,
+      description: lang === 'nl' ? module.description_nl : module.description_en,
+      studycredit: module.studycredit,
+      location: module.location,
+    }));
   }
 
   async findOne(id: string): Promise<Module> {

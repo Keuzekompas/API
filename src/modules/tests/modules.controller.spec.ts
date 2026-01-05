@@ -20,7 +20,11 @@ describe('ModulesController', () => {
 
       const response = await modulesController.findAll();
       console.log('Test: ModulesController.findAll - Response:', response);
-      expect(response).toBe(result);
+      expect(response).toEqual({
+        status: 200,
+        message: 'Modules successfully retrieved',
+        data: result,
+      });
     });
   });
 
