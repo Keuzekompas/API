@@ -47,7 +47,7 @@ describe('ModulesService', () => {
   });
 
   describe('findAll', () => {
-    it('should return an array of modules', async () => {
+    it('should return an array of mapped modules (default en)', async () => {
       console.log('Test: ModulesService.findAll - Start');
       const result = [mockModule];
 
@@ -57,13 +57,43 @@ describe('ModulesService', () => {
 
       const modules = await service.findAll();
       console.log('Test: ModulesService.findAll - Result:', modules);
-      expect(modules).toEqual(result);
+      
+      const expected = [{
+        _id: mockModule['_id'],
+        name: mockModule.name_en,
+        description: mockModule.description_en,
+        studycredit: mockModule.studycredit,
+        location: mockModule.location
+      }];
+
+      expect(modules).toEqual(expected);
+      expect(model.find).toHaveBeenCalled();
+    });
+
+    it('should return an array of mapped modules (nl)', async () => {
+      const result = [mockModule];
+
+      mockModuleModel.find.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(result),
+      });
+
+      const modules = await service.findAll('nl');
+      
+      const expected = [{
+        _id: mockModule['_id'],
+        name: mockModule.name_nl,
+        description: mockModule.description_nl,
+        studycredit: mockModule.studycredit,
+        location: mockModule.location
+      }];
+
+      expect(modules).toEqual(expected);
       expect(model.find).toHaveBeenCalled();
     });
   });
 
   describe('findOne', () => {
-    it('should return a module if found', async () => {
+    it('should return a mapped module if found (default en)', async () => {
       console.log('Test: ModulesService.findOne - Start');
       mockModuleModel.findById.mockReturnValue({
         exec: jest.fn().mockResolvedValue(mockModule),
@@ -71,7 +101,43 @@ describe('ModulesService', () => {
 
       const foundModule = await service.findOne('someId');
       console.log('Test: ModulesService.findOne - Result:', foundModule);
-      expect(foundModule).toEqual(mockModule);
+      
+      const expected = {
+        _id: mockModule['_id'],
+        name: mockModule.name_en,
+        description: mockModule.description_en,
+        studycredit: mockModule.studycredit,
+        location: mockModule.location,
+        level: mockModule.level,
+        available_spots: mockModule.available_spots,
+        start_date: mockModule.start_date,
+        module_tags: mockModule.module_tags_en,
+      };
+
+      expect(foundModule).toEqual(expected);
+      expect(model.findById).toHaveBeenCalledWith('someId');
+    });
+
+    it('should return a mapped module if found (nl)', async () => {
+      mockModuleModel.findById.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(mockModule),
+      });
+
+      const foundModule = await service.findOne('someId', 'nl');
+      
+      const expected = {
+        _id: mockModule['_id'],
+        name: mockModule.name_nl,
+        description: mockModule.description_nl,
+        studycredit: mockModule.studycredit,
+        location: mockModule.location,
+        level: mockModule.level,
+        available_spots: mockModule.available_spots,
+        start_date: mockModule.start_date,
+        module_tags: mockModule.module_tags_nl,
+      };
+
+      expect(foundModule).toEqual(expected);
       expect(model.findById).toHaveBeenCalledWith('someId');
     });
 

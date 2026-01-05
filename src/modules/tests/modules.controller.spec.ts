@@ -20,7 +20,11 @@ describe('ModulesController', () => {
 
       const response = await modulesController.findAll();
       console.log('Test: ModulesController.findAll - Response:', response);
-      expect(response).toBe(result);
+      expect(response).toEqual({
+        status: 200,
+        message: 'Modules successfully retrieved',
+        data: result,
+      });
     });
   });
 
@@ -32,7 +36,11 @@ describe('ModulesController', () => {
 
       const response = await modulesController.findOne('1');
       console.log('Test: ModulesController.findOne - Response:', response);
-      expect(response).toBe(result);
+      expect(response).toEqual({
+        status: 200,
+        message: 'Module successfully retrieved',
+        data: result,
+      });
     });
 
     it('should throw NotFoundException with status 404 if module not found', async () => {

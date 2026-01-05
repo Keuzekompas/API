@@ -1,15 +1,8 @@
-import {
-  BadRequestException,
-  Controller,
-  Get,
-  Param,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { ModulesService } from './modules.service';
-import { Module } from './module.interface';
 import { createJsonResponse, JsonResponse } from '../utils/json-response';
 import { AuthGuard } from '../auth/auth.guard';
-import { isValidObjectId } from 'mongoose';
+import { ModuleListDto, ModuleDetailDto } from './dtos/module-response.dto';
 
 @Controller('modules')
 export class ModulesController {
@@ -17,16 +10,28 @@ export class ModulesController {
 
   @UseGuards(AuthGuard)
   @Get()
-  async findAll(): Promise<JsonResponse<Module[]>> {
-    const modules = await this.modulesService.findAll();
-    return createJsonResponse(200, 'Modules successfully retrieved', modules);
+  async findAll(@Query('lang') lang: string = 'en'): Promise<JsonResponse<ModuleListDto[] | null>> {
+    try {
+      const modules = await this.modulesService.findAll(lang);
+      return createJsonResponse(200, 'Modules successfully retrieved', modules);
+    } catch (error) {
+      handleError(error, 'ModulesController.findAll');
+      throw error;
+    }
   }
 
   @UseGuards(AuthGuard)
   @Get(':id')
-  async findOne(@Param('id') id: string): Promise<JsonResponse<Module>> {
-    if (!isValidObjectId(id)) {
-      throw new BadRequestException('Invalid ID format');
+  async findOne(@Param('id') id: string, @Query('lang') lang: string = 'en'): Promise<JsonResponse<ModuleDetailDto | null>> {
+    try {
+      const module = await this.modulesService.findOne(id, lang);
+      if (!module) {
+        return createJsonResponse(404, 'Module not found', null);
+      }
+      return createJsonResponse(200, 'Module successfully retrieved', module);
+    } catch (error) {
+      handleError(error, 'ModulesController.findOne');
+      throw error;
     }
 
     const module = await this.modulesService.findOne(id);
