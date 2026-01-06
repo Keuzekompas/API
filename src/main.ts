@@ -7,6 +7,9 @@ import { ApiExceptionFilter } from './utils/api-exception.filter';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  const expressApp = app.getHttpAdapter().getInstance();
+  expressApp.set('trust proxy', 1); // Trust first proxy
+
   app.use(cookieParser());
   app.useGlobalFilters(new ApiExceptionFilter());
 

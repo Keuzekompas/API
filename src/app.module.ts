@@ -9,6 +9,7 @@ import { AuthModule } from './auth/auth.module';
 import { ModulesModule } from './modules/modules.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { CustomThrottlerGuard } from './utils/CustomThrottlerGuard';
 dotenv.config();
 
 @Module({
@@ -27,7 +28,7 @@ dotenv.config();
   providers: [
     {
       provide: APP_GUARD,
-      useClass: ThrottlerGuard, // Apply rate limiting globally (on all routes)
+      useClass: CustomThrottlerGuard, // Apply rate limiting globally (on all routes)
     },
     AppService,
     ...databaseProviders,
