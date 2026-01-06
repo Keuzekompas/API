@@ -4,6 +4,7 @@ import {
   NotFoundException,
   Request,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UserInterface } from './user.interface';
