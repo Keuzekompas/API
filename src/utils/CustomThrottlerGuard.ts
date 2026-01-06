@@ -35,10 +35,15 @@ export class CustomThrottlerGuard extends ThrottlerGuard {
     }
 
     try {
-      // 2. Try to handle the request normally
+      // Try to handle the request normally
       return await super.handleRequest(requestProps);
     } catch (e) {
-      // 3. Limit is NOW reached. We retrieve the level to show the correct time.
+      // If it's not a ThrottlerException, rethrow it
+      if (!(e instanceof ThrottlerException)) {
+        throw e;
+      }
+
+      // Limit is NOW reached. We retrieve the level to show the correct time.
       const levelKey = `level:${ip}`;
       const currentLevel = await this.redis.get(levelKey);
       const level = currentLevel ? Number.parseInt(currentLevel) : 0;
@@ -47,7 +52,7 @@ export class CustomThrottlerGuard extends ThrottlerGuard {
       // Apply penalty in Redis
       await this.applyProgressivePenalty(ip);
 
-      // 4. Throw the error directly with the timer (this overrides throwThrottlingException)
+      // Throw the error directly with the timer (this overrides throwThrottlingException)
       throw new ThrottlerException(
         `Limit reached. You are now blocked for ${this.formatTime(penaltySeconds as number)}.`,
       );
