@@ -18,7 +18,7 @@ describe('ModulesController', () => {
       const result = [{ name: 'Module1' }, { name: 'Module2' }];
       jest.spyOn(modulesService, 'findAll').mockResolvedValue(result as any);
 
-      const response = await modulesController.findAll();
+      const response = await modulesController.findAll({lang: 'nl'});
       console.log('Test: ModulesController.findAll - Response:', response);
       expect(response).toEqual({
         status: 200,
@@ -36,7 +36,7 @@ describe('ModulesController', () => {
 
       // Use a valid MongoDB ObjectId
       const validId = '507f1f77bcf86cd799439011';
-      const response = await modulesController.findOne(validId);
+      const response = await modulesController.findOne(validId, {lang: 'nl'});
       console.log('Test: ModulesController.findOne - Response:', response);
       expect(response).toEqual({
         status: 200,
@@ -53,7 +53,7 @@ describe('ModulesController', () => {
 
       try {
         const validId = '694163f6883e9f202ef8f367';
-        await modulesController.findOne(validId);
+        await modulesController.findOne(validId, {lang: 'nl'});
       } catch (error) {
         console.log(
           'Test: ModulesController.findOne (Error) - Caught Error:',
