@@ -4,7 +4,6 @@ import {
   Param,
   Query,
   UseGuards,
-  NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
 import { ModulesService } from './modules.service';
