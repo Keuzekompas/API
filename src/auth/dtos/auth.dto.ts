@@ -18,7 +18,7 @@ export class AuthDto {
 
   @IsString()
   @MinLength(8, { message: 'Password must be at least 8 characters long' })
-  @Matches(/^(?=(.*[0-9]){1,2})(?=(.*[!@#$%^&*(),.?":{}|<>]){2,}).*$/, {
+  @Matches(/^(?=(.*\d){1,2})(?=(.*[!@#$%^&*(),.?":{}|<>]){2,}).*$/, {
     message:
       'Password must contain 1 to 2 digits and at least 2 special characters',
   })
