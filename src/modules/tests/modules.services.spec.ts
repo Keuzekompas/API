@@ -9,6 +9,7 @@ describe('ModulesService', () => {
   let model: Model<Module>;
 
   const mockModule = {
+    _id: '5',
     name_en: 'Test Module',
     description_en: 'Description',
     studycredit: 5,
