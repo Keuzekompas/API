@@ -32,7 +32,7 @@ describe('AuthController', () => {
 
   describe('login', () => {
     it('should call authService.login and set a cookie', async () => {
-      const authDto = { email: 'test@test.com', password: 'pw' };
+      const authDto = { email: 'test@student.avans.nl', password: 'pw' };
       const loginResult = { token: 'abc-token', user: { id: '1' } };
       
       mockAuthService.login.mockResolvedValue(loginResult);

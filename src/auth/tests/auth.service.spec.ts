@@ -15,7 +15,7 @@ describe('AuthService', () => {
 
   const mockUser = {
     _id: '507f1f77bcf86cd799439011',
-    email: 'test@example.com',
+    email: 'test@student.avans.nl',
     password: 'hashedPassword',
   };
 
@@ -75,25 +75,21 @@ describe('AuthService', () => {
       mockUserRepository.findByEmail.mockResolvedValue(mockUser);
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
-      await expect(service.login('test@example.com', 'wrongPass')).rejects.toThrow(
+      await expect(service.login('test@student.avans.nl', 'wrongPass')).rejects.toThrow(
         UnauthorizedException,
       );
     });
 
     it('should generate a token with correct Session Length (1 hour)', async () => {
-      // Arrange
       mockUserRepository.findByEmail.mockResolvedValue(mockUser);
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
-      // Act
-      const { token } = await service.login('test@example.com', 'password');
+      const { token } = await service.login('test@student.avans.nl', 'password');
       const decoded: any = jwtService.decode(token);
 
-      // Assert
       expect(decoded).toHaveProperty('exp');
       expect(decoded).toHaveProperty('iat');
       
-      // Check difference between issued-at and expiration is 3600 seconds (1 hour)
       const sessionLength = decoded.exp - decoded.iat;
       expect(sessionLength).toBe(3600); 
     });
