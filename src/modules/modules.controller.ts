@@ -11,6 +11,7 @@ import { ModulesService } from './modules.service';
 import { createJsonResponse, JsonResponse } from '../utils/json-response';
 import { AuthGuard } from '../auth/auth.guard';
 import { ModuleListDto, ModuleDetailDto } from './dtos/module-response.dto';
+import { GetModulesQueryDto } from './dtos/get-modules-query.dto';
 
 @Controller('modules')
 export class ModulesController {
@@ -19,8 +20,9 @@ export class ModulesController {
   @UseGuards(AuthGuard)
   @Get()
   async findAll(
-    @Query('lang') lang: string = 'en',
+    @Query() query: GetModulesQueryDto,
   ): Promise<JsonResponse<ModuleListDto[] | null>> {
+    const { lang } = query;
     const modules = await this.modulesService.findAll(lang);
     return createJsonResponse(200, 'Modules successfully retrieved', modules);
   }
@@ -29,13 +31,13 @@ export class ModulesController {
   @Get(':id')
   async findOne(
     @Param('id') id: string,
-    @Query('lang') lang: string = 'en',
+    @Query() query: GetModulesQueryDto,
   ): Promise<JsonResponse<ModuleDetailDto | null>> {
     if (!isValidObjectId(id)) {
       throw new BadRequestException('Invalid module ID format');
     }
 
-    const module = await this.modulesService.findOne(id, lang);
+    const module = await this.modulesService.findOne(id, query.lang);
     return createJsonResponse(200, 'Module successfully retrieved', module);
   }
 }
