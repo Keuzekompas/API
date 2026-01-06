@@ -8,11 +8,13 @@ import {
 import { UserService } from './user.service';
 import { UserInterface } from './user.interface';
 import { createJsonResponse, JsonResponse } from '../utils/json-response';
+import { AuthGuard } from '../auth/auth.guard';
 
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  @UseGuards(AuthGuard)
   @Get('profile')
   async getProfile(
     @Request() req,

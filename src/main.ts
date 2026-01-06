@@ -4,11 +4,13 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import * as MongoSanitize from 'express-mongo-sanitize';
+import cookieParser from 'cookie-parser';
 import { ApiExceptionFilter } from './utils/api-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  app.use(cookieParser());
   app.useGlobalFilters(new ApiExceptionFilter());
 
   app.enableCors({
