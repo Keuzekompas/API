@@ -1,4 +1,4 @@
-import { Injectable, ExecutionContext } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import {
   ThrottlerGuard,
   ThrottlerException,
@@ -6,11 +6,11 @@ import {
 } from '@nestjs/throttler';
 import Redis from 'ioredis';
 
-const PENALTIES = [60, 300, 900, 86400, 604800];
+const PENALTIES = [60, 300, 900, 86400, 604800]; // 1m, 5m, 15m, 1h, 1d, 7d
 
 @Injectable()
 export class CustomThrottlerGuard extends ThrottlerGuard {
-  private redis = new Redis({
+  private readonly redis = new Redis({
     host: process.env.REDIS_HOST || 'localhost',
     port: Number(process.env.REDIS_PORT) || 6379,
   });
@@ -19,7 +19,7 @@ export class CustomThrottlerGuard extends ThrottlerGuard {
   protected async handleRequest(
     requestProps: ThrottlerRequest,
   ): Promise<boolean> {
-    const { context, limit, ttl } = requestProps;
+    const { context } = requestProps;
     const request = context.switchToHttp().getRequest();
     const ip = request.ip || request.connection.remoteAddress;
 
@@ -50,11 +50,12 @@ export class CustomThrottlerGuard extends ThrottlerGuard {
     const blockKey = `block:${ip}`;
 
     const currentLevel = await this.redis.get(levelKey);
-    const level = currentLevel ? parseInt(currentLevel) : 0;
-    const penaltySeconds = PENALTIES[level] || PENALTIES[PENALTIES.length - 1];
+    const level = currentLevel ? Number.parseInt(currentLevel) : 0;
+    const penaltySeconds = PENALTIES[level] || PENALTIES.at(-1);
 
-    await this.redis.set(blockKey, 'blocked', 'EX', penaltySeconds);
-    await this.redis.set(levelKey, level + 1, 'EX', 86400);
+    await this.redis.set(blockKey, 'blocked', 'EX', penaltySeconds as number);
+
+    await this.redis.set(levelKey, (level + 1).toString(), 'EX', 86400);
   }
 
   // The exception for the FIRST time the limit is reached
