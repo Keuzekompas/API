@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-floating-promises */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import * as MongoSanitize from 'express-mongo-sanitize';
@@ -13,15 +10,23 @@ async function bootstrap() {
   app.use(cookieParser());
   app.useGlobalFilters(new ApiExceptionFilter());
 
+  const allowedOrigins = process.env.CORS_ORIGIN?.split(',') || [];
+
   app.enableCors({
-    origin: [
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'http://localhost:5173', // bv Vite
-    ],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or Postman)
+      // or check if the origin is in the whitelist
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        // This blocks the request directly at the CORS level
+        callback(new Error('Not allowed by CORS policy'));
+      }
+    },
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true, // alleen als je cookies gebruikt
+    credentials: true,
+    maxAge: 600,
   });
 
   app.use((req, res, next) => {
