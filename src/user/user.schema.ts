@@ -3,10 +3,20 @@ import { HydratedDocument } from 'mongoose';
 
 @Schema()
 export class User {
-  @Prop({ required: true })
+  @Prop({
+    required: true,
+    minlength: 8,
+  })
   password: string;
 
-  @Prop({ required: true, unique: true })
+  @Prop({
+    required: true,
+    unique: true,
+    validate: {
+      validator: (v: number) => v.toString().length >= 7,
+      message: 'Studentennumber must contain at least 7 digits',
+    },
+  })
   studentNumber: number;
 
   @Prop({
@@ -16,12 +26,17 @@ export class User {
     trim: true,
     match: [
       /^[a-zA-Z0-9._%+-]+@student\.avans\.nl$/,
-      'Please fill a valid Avans student email',
+      'Invalid Avans student email address',
     ],
   })
   email: string;
 
-  @Prop({ required: true })
+  @Prop({
+    required: true,
+    minlength: 1,
+    maxlength: 255,
+    match: [/^[\p{L} .'-]+$/u, 'Name contains invalid characters'],
+  })
   name: string;
 }
 
