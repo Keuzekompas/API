@@ -6,7 +6,7 @@ import {
 } from '@nestjs/throttler';
 import Redis from 'ioredis';
 
-const PENALTIES = [60, 300, 900, 86400, 604800]; // 1m, 5m, 15m, 1h, 1d, 7d
+const PENALTIES = [60, 300, 900, 86400, 604800]; // 1m, 5m, 15m, 1d, 1w
 
 @Injectable()
 export class CustomThrottlerGuard extends ThrottlerGuard {
@@ -29,19 +29,28 @@ export class CustomThrottlerGuard extends ThrottlerGuard {
     const isBlocked = await this.redis.get(blockKey);
     if (isBlocked) {
       const timeLeft = await this.redis.ttl(blockKey);
-      const minutes = Math.ceil(timeLeft / 60);
       throw new ThrottlerException(
-        `Too many attempts. Account locked for another ${minutes} minutes.`,
+        `Too many attempts. Account locked for ${this.formatTime(timeLeft)}.`,
       );
     }
 
     try {
-      // Call the super method with the full object
+      // 2. Try to handle the request normally
       return await super.handleRequest(requestProps);
     } catch (e) {
-      // Apply penalty on limit exceed
+      // 3. Limit is NOW reached. We retrieve the level to show the correct time.
+      const levelKey = `level:${ip}`;
+      const currentLevel = await this.redis.get(levelKey);
+      const level = currentLevel ? Number.parseInt(currentLevel) : 0;
+      const penaltySeconds = PENALTIES[level] || PENALTIES.at(-1);
+
+      // Apply penalty in Redis
       await this.applyProgressivePenalty(ip);
-      throw e;
+
+      // 4. Throw the error directly with the timer (this overrides throwThrottlingException)
+      throw new ThrottlerException(
+        `Limit reached. You are now blocked for ${this.formatTime(penaltySeconds as number)}.`,
+      );
     }
   }
 
@@ -53,15 +62,21 @@ export class CustomThrottlerGuard extends ThrottlerGuard {
     const level = currentLevel ? Number.parseInt(currentLevel) : 0;
     const penaltySeconds = PENALTIES[level] || PENALTIES.at(-1);
 
+    // Set the block and increase the offense level
     await this.redis.set(blockKey, 'blocked', 'EX', penaltySeconds as number);
-
-    await this.redis.set(levelKey, (level + 1).toString(), 'EX', 86400);
+    await this.redis.set(levelKey, (level + 1).toString(), 'EX', 86400); // Level expires after 24h
   }
 
-  // The exception for the FIRST time the limit is reached
+  private formatTime(seconds: number): string {
+    if (seconds < 60) return `${seconds} seconds`;
+    if (seconds < 3600) return `${Math.ceil(seconds / 60)} minute(s)`;
+    if (seconds < 86400) return `${Math.ceil(seconds / 3600)} hour(s)`;
+    return `${Math.ceil(seconds / 86400)} day(s)`;
+  }
+
+  // This is now skipped by our own throw in the catch,
+  // but we keep it for completeness.
   protected async throwThrottlingException(): Promise<void> {
-    throw new ThrottlerException(
-      'Limit reached. You are now blocked for 1 minute.',
-    );
+    throw new ThrottlerException('Limit reached.');
   }
 }
