@@ -9,7 +9,16 @@ export class User {
   @Prop({ required: true, unique: true })
   studentNumber: number;
 
-  @Prop({ required: true, unique: true })
+  @Prop({
+    required: true,
+    unique: true,
+    lowercase: true,
+    trim: true,
+    match: [
+      /^[a-zA-Z0-9._%+-]+@student\.avans\.nl$/,
+      'Please fill a valid Avans student email',
+    ],
+  })
   email: string;
 
   @Prop({ required: true })
