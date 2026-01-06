@@ -1,9 +1,16 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Query,
+  UseGuards,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { ModulesService } from './modules.service';
 import { createJsonResponse, JsonResponse } from '../utils/json-response';
 import { AuthGuard } from '../auth/auth.guard';
 import { ModuleListDto, ModuleDetailDto } from './dtos/module-response.dto';
-import { handleError } from '../utils/error-handler';
 
 @Controller('modules')
 export class ModulesController {
@@ -11,32 +18,34 @@ export class ModulesController {
 
   @UseGuards(AuthGuard)
   @Get()
-  async findAll(@Query('lang') lang: string = 'en'): Promise<JsonResponse<ModuleListDto[] | null>> {
-    try {
-      const modules = await this.modulesService.findAll(lang);
-      return createJsonResponse(200, 'Modules successfully retrieved', modules);
-    } catch (error) {
-      handleError(error, 'ModulesController.findAll');
-      throw error;
-    }
+  async findAll(
+    @Query('lang') lang: string = 'en',
+  ): Promise<JsonResponse<ModuleListDto[] | null>> {
+    const modules = await this.modulesService.findAll(lang);
+    return createJsonResponse(200, 'Modules successfully retrieved', modules);
   }
 
   @UseGuards(AuthGuard)
   @Get(':id')
-  async findOne(@Param('id') id: string, @Query('lang') lang: string = 'en'): Promise<JsonResponse<ModuleDetailDto | null>> {
-    try {
-      const module = await this.modulesService.findOne(id, lang);
-      if (!module) {
-        return createJsonResponse(404, 'Module not found', null);
-      }
-      return createJsonResponse(200, 'Module successfully retrieved', module);
-    } catch (error) {
-      handleError(error, 'ModulesController.findOne');
-      throw error;
+  async findOne(
+    @Param('id') id: string,
+    @Query('lang') lang: string = 'en',
+  ): Promise<JsonResponse<ModuleDetailDto | null>> {
+    if (!isValidObjectId(id)) {
+      throw new BadRequestException('Invalid module ID format');
     }
 
-    const module = await this.modulesService.findOne(id);
+    const module = await this.modulesService.findOne(id, lang);
+
+    if (!module) {
+      throw new NotFoundException('Module not found');
+    }
 
     return createJsonResponse(200, 'Module successfully retrieved', module);
   }
+}
+
+function isValidObjectId(id: string): boolean {
+  // Simple check for a 24-character hex string (MongoDB ObjectId)
+  return /^[a-fA-F0-9]{24}$/.test(id);
 }
