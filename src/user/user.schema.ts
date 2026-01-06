@@ -14,7 +14,7 @@ export class User {
     unique: true,
     validate: {
       validator: (v: number) => v.toString().length === 7,
-      message: 'Studentennumber must contain exactly 7 digits',
+      message: 'Student number must contain exactly 7 digits',
     },
   })
   studentNumber: number;
