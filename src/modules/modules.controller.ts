@@ -36,11 +36,6 @@ export class ModulesController {
     }
 
     const module = await this.modulesService.findOne(id, lang);
-
-    if (!module) {
-      throw new NotFoundException('Module not found');
-    }
-
     return createJsonResponse(200, 'Module successfully retrieved', module);
   }
 }
