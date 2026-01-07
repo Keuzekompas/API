@@ -10,7 +10,7 @@ export interface BlockStatus {
 
 // This manager counts the level, sets blocks, formats time strings and resets penalties
 export class PenaltyManager {
-  private static redis = redisInstance;
+  private static readonly redis = redisInstance;
 
   static async getBlockData(key: string): Promise<BlockStatus> {
     const blockKey = `block:${key}`;
@@ -27,12 +27,12 @@ export class PenaltyManager {
     const newLevelRaw = await this.redis.incr(levelKey);
     const level = newLevelRaw - 1; // We begin at index 0 for the array
 
-    const penaltySeconds = PENALTIES[level] ?? PENALTIES[PENALTIES.length - 1];
+    const penaltySeconds = PENALTIES[level] || PENALTIES.at(-1);
 
-    await this.redis.set(blockKey, 'blocked', 'EX', penaltySeconds);
+    await this.redis.set(blockKey, 'blocked', 'EX', penaltySeconds as number);
     await this.redis.expire(levelKey, 86400);
 
-    return penaltySeconds;
+    return penaltySeconds as number;
   }
 
   static async resetPenalty(key: string): Promise<void> {
