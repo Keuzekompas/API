@@ -2,7 +2,6 @@ import { Injectable, Inject } from '@nestjs/common';
 import { Model } from 'mongoose';
 import { UserDocument } from './user.schema';
 import { UserInterface } from './user.interface';
-import { ModuleListDto } from 'src/modules/dtos/module-response.dto';
 
 @Injectable()
 export class UserRepository {
