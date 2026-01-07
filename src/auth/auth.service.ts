@@ -6,6 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { Model } from 'mongoose';
 import { LoginResponse } from './auth.interface';
 import { redisInstance } from '../utils/redis';
+import { PenaltyManager } from 'src/utils/penalty';
 
 @Injectable()
 export class AuthService {
@@ -30,7 +31,9 @@ export class AuthService {
     }
 
     // Login successful, reset throttle penalty
-    await redisInstance.del(`level:${ip}`, `block:${ip}`);
+    await PenaltyManager.resetPenalty(`ip:${ip}`);
+
+    await PenaltyManager.resetPenalty(`account:${email.toLowerCase()}`);
 
     const token = this.jwtService.sign({ userId: user._id.toString() });
     return {

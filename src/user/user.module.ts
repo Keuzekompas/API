@@ -5,7 +5,7 @@ import { UserService } from './user.service';
 import { UserRepository } from './user.repository';
 import { DatabaseModule } from 'src/database/database.module';
 import { userProviders } from './user.providers';
-import { AuthGuard } from 'src/auth/auth.guard';
+import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { AuthModule } from 'src/auth/auth.module';
 
 @Module({

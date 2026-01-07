@@ -11,15 +11,15 @@ export class AuthDto {
   @IsEmail()
   @IsNotEmpty({ message: 'Email cant be empty' })
   @Matches(/^[a-zA-Z0-9._%+-]+@student\.avans\.nl$/, {
-    message: 'Use a valid Avans student email address',
+    message: 'Invalid email or password',
   })
   @Transform(({ value }) => value?.toLowerCase().trim())
   email: string;
 
   @IsString()
-  @MinLength(8, { message: 'Password must be at least 8 characters long' })
+  @MinLength(8, { message: 'Invalid email or password' })
   @Matches(/^(?=.*\d)(?=(.*[!@#$%^&*(),.?":{}|<>]){2,}).*$/, {
-    message: 'Password must contain 1 digit and at least 2 special characters',
+    message: 'Invalid email or password',
   })
   password: string;
 }
