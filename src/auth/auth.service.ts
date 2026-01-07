@@ -30,7 +30,8 @@ export class AuthService {
     }
 
     // Login successful, reset throttle penalty
-    await redisInstance.del(`level:${ip}`, `block:${ip}`);
+    const accountKey = `login-limit:${email.toLowerCase()}`;
+    await redisInstance.del(`level:${ip}`, `block:${ip}`, accountKey);
 
     const token = this.jwtService.sign({ userId: user._id.toString() });
     return {
