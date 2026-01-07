@@ -18,7 +18,10 @@ import { redisInstance } from './utils/redis';
     AuthModule,
     ModulesModule,
     ThrottlerModule.forRoot({
-      throttlers: [{ ttl: 60000, limit: 60 }], // Global default limit
+      throttlers: [
+        { name: 'default', ttl: 60000, limit: 60 }, // Global limit
+        { name: 'loginAttempts', ttl: 60000, limit: 5 }, // login limit
+      ],
       storage: new ThrottlerStorageRedisService(redisInstance),
     }),
   ],
