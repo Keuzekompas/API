@@ -35,4 +35,28 @@ export class UserRepository {
       .lean<UserDocument>()
       .exec();
   }
+
+  async addFavorite(userId: string, moduleId: string): Promise<UserInterface | null> {
+    return this.userModel
+      .findByIdAndUpdate(
+        userId,
+        { $addToSet: { favoriteModules: moduleId } },
+        { new: true }
+      )
+      .select('-password -__v')
+      .lean<UserInterface>()
+      .exec();
+  }
+
+  async removeFavorite(userId: string, moduleId: string): Promise<UserInterface | null> {
+    return this.userModel
+      .findByIdAndUpdate(
+        userId,
+        { $pull: { favoriteModules: moduleId } },
+        { new: true }
+      )
+      .select('-password -__v')
+      .lean<UserInterface>()
+      .exec();
+  }
 }

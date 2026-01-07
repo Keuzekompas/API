@@ -39,4 +39,12 @@ export class UserService {
   async findByEmail(email: string): Promise<UserDocument | null> {
     return await this.userRepository.findByEmail(email);
   }
+
+  async addFavorite(userId: string, moduleId: string): Promise<UserInterface | null> {
+    return await this.userRepository.addFavorite(userId, moduleId);
+  }
+
+  async removeFavorite(userId: string, moduleId: string): Promise<UserInterface | null> {
+    return await this.userRepository.removeFavorite(userId, moduleId);
+  }
 }
