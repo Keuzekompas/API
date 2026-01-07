@@ -1,4 +1,5 @@
 import { redisInstance } from './redis';
+import { TimeFormatter } from './time-formatter';
 
 export const PENALTIES = [60, 300, 900, 86400]; // 1m, 5m, 15m, 24h
 
@@ -39,8 +40,6 @@ export class PenaltyManager {
   }
 
   static formatTime(seconds: number): string {
-    if (seconds < 60) return `${seconds} seconds`;
-    if (seconds < 3600) return `${Math.ceil(seconds / 60)} minute(s)`;
-    return `${Math.ceil(seconds / 3600)} hour(s) `;
+    return TimeFormatter.format(seconds);
   }
 }
