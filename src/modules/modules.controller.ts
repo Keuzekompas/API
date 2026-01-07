@@ -11,6 +11,7 @@ import { createJsonResponse, JsonResponse } from '../utils/json-response';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { ModuleListDto, ModuleDetailDto } from './dtos/module-response.dto';
 import { GetModulesQueryDto } from './dtos/get-modules-query.dto';
+import { isValidObjectId } from 'mongoose';
 
 @Controller('modules')
 export class ModulesController {
@@ -39,9 +40,4 @@ export class ModulesController {
     const module = await this.modulesService.findOne(id, query.lang);
     return createJsonResponse(200, 'Module successfully retrieved', module);
   }
-}
-
-function isValidObjectId(id: string): boolean {
-  // Simple check for a 24-character hex string (MongoDB ObjectId)
-  return /^[a-fA-F0-9]{24}$/.test(id);
 }
