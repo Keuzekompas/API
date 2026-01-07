@@ -4,16 +4,13 @@ import {
   ThrottlerException,
   ThrottlerRequest,
 } from '@nestjs/throttler';
-import Redis from 'ioredis';
+import { redisInstance } from './redis';
 
-const PENALTIES = [60, 300, 900, 86400, 604800]; // 1m, 5m, 15m, 1d, 1w
+const PENALTIES = [60, 300, 900, 86400]; // 1m, 5m, 15m, 24h
 
 @Injectable()
 export class CustomThrottlerGuard extends ThrottlerGuard {
-  private readonly redis = new Redis({
-    host: process.env.REDIS_HOST || 'localhost',
-    port: Number(process.env.REDIS_PORT) || 6379,
-  });
+  private readonly redis = redisInstance;
 
   // Override handleRequest to implement progressive penalties
   protected async handleRequest(
@@ -39,9 +36,7 @@ export class CustomThrottlerGuard extends ThrottlerGuard {
       return await super.handleRequest(requestProps);
     } catch (e) {
       // If it's not a ThrottlerException, rethrow it
-      if (!(e instanceof ThrottlerException)) {
-        throw e;
-      }
+      if (!(e instanceof ThrottlerException)) throw e;
 
       // Limit is NOW reached. We retrieve the level to show the correct time.
       const levelKey = `level:${ip}`;
@@ -62,7 +57,6 @@ export class CustomThrottlerGuard extends ThrottlerGuard {
   private async applyProgressivePenalty(ip: string) {
     const levelKey = `level:${ip}`;
     const blockKey = `block:${ip}`;
-
     const currentLevel = await this.redis.get(levelKey);
     const level = currentLevel ? Number.parseInt(currentLevel) : 0;
     const penaltySeconds = PENALTIES[level] || PENALTIES.at(-1);
@@ -75,13 +69,6 @@ export class CustomThrottlerGuard extends ThrottlerGuard {
   private formatTime(seconds: number): string {
     if (seconds < 60) return `${seconds} seconds`;
     if (seconds < 3600) return `${Math.ceil(seconds / 60)} minute(s)`;
-    if (seconds < 86400) return `${Math.ceil(seconds / 3600)} hour(s)`;
-    return `${Math.ceil(seconds / 86400)} day(s)`;
-  }
-
-  // This is now skipped by our own throw in the catch,
-  // but we keep it for completeness.
-  protected async throwThrottlingException(): Promise<void> {
-    throw new ThrottlerException('Limit reached.');
+    return `${Math.ceil(seconds / 3600)} hour(s)`;
   }
 }

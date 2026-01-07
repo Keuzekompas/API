@@ -1,4 +1,4 @@
-import { Controller, Post, HttpCode, Body, Res } from '@nestjs/common';
+import { Controller, Post, HttpCode, Body, Res, Ip } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { createJsonResponse } from '../utils/json-response';
 import { AuthDto } from './dtos/auth.dto';
@@ -15,10 +15,12 @@ export class AuthController {
   async login(
     @Res({ passthrough: true }) res: Response,
     @Body() authDto: AuthDto,
+    @Ip() ip: string,
   ) {
     const response = await this.authService.login(
       authDto.email,
       authDto.password,
+      ip,
     );
 
     res.cookie('token', response.token, {
