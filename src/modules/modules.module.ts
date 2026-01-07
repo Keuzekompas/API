@@ -4,7 +4,7 @@ import { ModulesService } from './modules.service';
 import { modulesProviders } from './modules.providers';
 import { DatabaseModule } from '../database/database.module';
 import { AuthModule } from 'src/auth/auth.module';
-import { AuthGuard } from 'src/auth/auth.guard';
+import { AuthGuard } from 'src/auth/guards/auth.guard';
 
 @Module({
   imports: [DatabaseModule, AuthModule],

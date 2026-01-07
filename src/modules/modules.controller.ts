@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { ModulesService } from './modules.service';
 import { createJsonResponse, JsonResponse } from '../utils/json-response';
-import { AuthGuard } from '../auth/auth.guard';
+import { AuthGuard } from '../auth/guards/auth.guard';
 import { ModuleListDto, ModuleDetailDto } from './dtos/module-response.dto';
 import { GetModulesQueryDto } from './dtos/get-modules-query.dto';
 
