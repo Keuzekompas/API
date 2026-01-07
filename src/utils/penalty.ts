@@ -22,13 +22,14 @@ export class PenaltyManager {
     const levelKey = `level:${key}`;
     const blockKey = `block:${key}`;
 
-    const currentLevel = await this.redis.get(levelKey);
-    const level = currentLevel ? parseInt(currentLevel, 10) : 0;
+    // Atomic increment
+    const newLevelRaw = await this.redis.incr(levelKey);
+    const level = newLevelRaw - 1; // We begin at index 0 for the array
+
     const penaltySeconds = PENALTIES[level] ?? PENALTIES[PENALTIES.length - 1];
 
-    // Set block and increment level (level expires after 24h)
     await this.redis.set(blockKey, 'blocked', 'EX', penaltySeconds);
-    await this.redis.set(levelKey, (level + 1).toString(), 'EX', 86400);
+    await this.redis.expire(levelKey, 86400);
 
     return penaltySeconds;
   }
