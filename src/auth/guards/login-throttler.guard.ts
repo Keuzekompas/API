@@ -1,16 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import { ThrottlerGuard } from '@nestjs/throttler';
+import { Request } from 'express';
+import { BaseThrottlerGuard } from '../../utils/guards/base-throttler.guard';
 
 @Injectable()
-export class LoginThrottlerGuard extends ThrottlerGuard {
-  // Override getTracker to use email as identifier, not IP
-  protected async getTracker(req: Record<string, any>): Promise<string> {
-    const email = req.body?.email;
-    if (!email) {
-      return req.ip; // Fallback on IP if no email is provided
-    }
-    return `login-limit:${email.toLowerCase()}`;
+export class LoginThrottlerGuard extends BaseThrottlerGuard {
+  protected getTargetKey(request: Request): string {
+    const email = request.body?.email?.toLowerCase();
+    const ip = request.ip ?? request.socket.remoteAddress ?? 'unknown';
+    // If no email is present in body, fallback to IP to ensure a key exists
+    return email ? `account:${email}` : `ip:${ip}`;
   }
 
-  // Later add a progressive penalty system here if needed
+  protected async getTracker(req: Request): Promise<string> {
+    return this.getTargetKey(req);
+  }
 }

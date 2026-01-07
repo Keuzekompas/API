@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
-import { UserRepository } from 'src/user/user.repository';
-import { DatabaseModule } from 'src/database/database.module';
-import { userProviders } from 'src/user/user.providers';
+import { UserRepository } from '../user/user.repository';
+import { DatabaseModule } from '../database/database.module';
+import { userProviders } from '../user/user.providers';
 import { JwtModule } from '@nestjs/jwt';
 
 @Module({

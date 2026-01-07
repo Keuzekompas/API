@@ -3,16 +3,13 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { databaseProviders } from './database/database.providers';
 import { UserModule } from './user/user.module';
-import * as dotenv from 'dotenv';
 import { AuthModule } from './auth/auth.module';
 import { ModulesModule } from './modules/modules.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
-import { CustomThrottlerGuard } from './utils/CustomThrottlerGuard';
+import { IpThrottlerGuard } from './utils/guards/ip-throttler.guard';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import { redisInstance } from './utils/redis';
-
-dotenv.config();
 
 @Global()
 @Module({
@@ -21,7 +18,7 @@ dotenv.config();
     AuthModule,
     ModulesModule,
     ThrottlerModule.forRoot({
-      throttlers: [{ ttl: 60000, limit: 60 }], // Default: 60 requests per minute
+      throttlers: [{ ttl: 60000, limit: 60 }], // Global default limit
       storage: new ThrottlerStorageRedisService(redisInstance),
     }),
   ],
@@ -29,7 +26,7 @@ dotenv.config();
   providers: [
     {
       provide: APP_GUARD,
-      useClass: CustomThrottlerGuard, // Apply rate limiting globally (on all routes)
+      useClass: IpThrottlerGuard, // Protects every route by IP
     },
     AppService,
     ...databaseProviders,
