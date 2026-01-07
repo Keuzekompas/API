@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
+import { Module } from '../modules/module.schema';
 
 @Schema()
 export class User {
@@ -38,6 +39,9 @@ export class User {
     match: [/^[\p{L} .'-]+$/u, 'Name contains invalid characters'],
   })
   name: string;
+
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Modules' }] })
+  favoriteModules: Module[];
 }
 
 export type UserDocument = HydratedDocument<User>;

@@ -2,6 +2,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { Model } from 'mongoose';
 import { UserDocument } from './user.schema';
 import { UserInterface } from './user.interface';
+import { ModuleListDto } from 'src/modules/dtos/module-response.dto';
 
 @Injectable()
 export class UserRepository {
@@ -13,6 +14,15 @@ export class UserRepository {
   async findById(id: string): Promise<UserInterface | null> {
     return this.userModel
       .findById(id)
+      .select('-password -__v')
+      .lean<UserInterface>()
+      .exec();
+  }
+
+  async findWithFavorites(id: string): Promise<UserInterface | null> {
+    return this.userModel
+      .findById(id)
+      .populate('favoriteModules')
       .select('-password -__v')
       .lean<UserInterface>()
       .exec();
