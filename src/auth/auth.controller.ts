@@ -1,22 +1,26 @@
-import { Controller, Post, HttpCode, Body, Res } from '@nestjs/common';
+import { Controller, Post, HttpCode, Body, Res, Ip } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { createJsonResponse } from '../utils/json-response';
 import { AuthDto } from './dtos/auth.dto';
 import type { Response } from 'express';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // Limit to 5 login attempts per minute per IP
   @Post('/login')
   @HttpCode(200)
   async login(
     @Res({ passthrough: true }) res: Response,
     @Body() authDto: AuthDto,
+    @Ip() ip: string,
   ) {
     const response = await this.authService.login(
       authDto.email,
       authDto.password,
+      ip,
     );
 
     res.cookie('token', response.token, {
