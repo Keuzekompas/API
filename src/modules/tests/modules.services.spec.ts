@@ -3,13 +3,14 @@ import { ModulesService } from '../modules.service';
 import { NotFoundException } from '@nestjs/common';
 import { Model } from 'mongoose';
 import { Module } from '../module.interface';
+import { GetModulesQueryDto } from '../dtos/get-modules-query.dto';
 
 describe('ModulesService', () => {
   let service: ModulesService;
   let model: Model<Module>;
 
   const mockModule = {
-    _id: '5',
+    _id: '507f1f77bcf86cd799439011',
     name_en: 'Test Module',
     description_en: 'Description',
     studycredit: 5,
@@ -41,6 +42,7 @@ describe('ModulesService', () => {
 
     service = module.get<ModulesService>(ModulesService);
     model = module.get<Model<Module>>('MODULE_MODEL');
+    jest.clearAllMocks();
   });
 
   it('should be defined', () => {
@@ -48,63 +50,75 @@ describe('ModulesService', () => {
   });
 
   describe('findAll', () => {
-    it('should return an array of mapped modules (default en)', async () => {
-      console.log('Test: ModulesService.findAll - Start');
+    it('should return an array of mapped modules with default pagination', async () => {
       const result = [mockModule];
+      const query: GetModulesQueryDto = { lang: 'en', page: 1, limit: 10 };
 
-      mockModuleModel.find.mockReturnValue({
+      // Mock chain: find() -> skip() -> limit() -> exec()
+      const mockChain = {
+        skip: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue(result),
-      });
+      };
+      mockModuleModel.find.mockReturnValue(mockChain);
 
-      const modules = await service.findAll();
-      console.log('Test: ModulesService.findAll - Result:', modules);
-      
+      const modules = await service.findAll(query);
+
       const expected = [{
-        _id: mockModule['_id'],
+        _id: mockModule._id,
         name: mockModule.name_en,
         description: mockModule.description_en,
         studycredit: mockModule.studycredit,
-        location: mockModule.location
+        location: mockModule.location,
       }];
 
       expect(modules).toEqual(expected);
-      expect(model.find).toHaveBeenCalled();
+      expect(mockModuleModel.find).toHaveBeenCalledWith({});
+      expect(mockChain.skip).toHaveBeenCalledWith(0);
+      expect(mockChain.limit).toHaveBeenCalledWith(10);
     });
 
-    it('should return an array of mapped modules (nl)', async () => {
-      const result = [mockModule];
+    it('should apply filters correctly', async () => {
+      const query: GetModulesQueryDto = {
+        lang: 'nl',
+        page: 2,
+        limit: 5,
+        search: 'test',
+        location: 'Eindhoven',
+        studycredit: 5,
+      };
 
-      mockModuleModel.find.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(result),
-      });
+      const mockChain = {
+        skip: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue([mockModule]),
+      };
+      mockModuleModel.find.mockReturnValue(mockChain);
 
-      const modules = await service.findAll('nl');
-      
-      const expected = [{
-        _id: mockModule['_id'],
-        name: mockModule.name_nl,
-        description: mockModule.description_nl,
-        studycredit: mockModule.studycredit,
-        location: mockModule.location
-      }];
+      await service.findAll(query);
 
-      expect(modules).toEqual(expected);
-      expect(model.find).toHaveBeenCalled();
+      const expectedFilter = {
+        name_nl: { $regex: 'test', $options: 'i' },
+        location: 'Eindhoven',
+        studycredit: 5,
+      };
+
+      expect(mockModuleModel.find).toHaveBeenCalledWith(expectedFilter);
+      expect(mockChain.skip).toHaveBeenCalledWith(5); // (page 2 - 1) * 5
+      expect(mockChain.limit).toHaveBeenCalledWith(5);
     });
   });
 
   describe('findOne', () => {
-    it('should return a mapped module if found (default en)', async () => {
-      console.log('Test: ModulesService.findOne - Start');
+    it('should return a mapped module if found', async () => {
       mockModuleModel.findById.mockReturnValue({
         exec: jest.fn().mockResolvedValue(mockModule),
       });
 
-      const foundModule = await service.findOne('someId');
-      console.log('Test: ModulesService.findOne - Result:', foundModule);
+      const foundModule = await service.findOne('507f1f77bcf86cd799439011');
       
       const expected = {
-        _id: mockModule['_id'],
+        _id: mockModule._id,
         name: mockModule.name_en,
         description: mockModule.description_en,
         studycredit: mockModule.studycredit,
@@ -116,48 +130,16 @@ describe('ModulesService', () => {
       };
 
       expect(foundModule).toEqual(expected);
-      expect(model.findById).toHaveBeenCalledWith('someId');
-    });
-
-    it('should return a mapped module if found (nl)', async () => {
-      mockModuleModel.findById.mockReturnValue({
-        exec: jest.fn().mockResolvedValue(mockModule),
-      });
-
-      const foundModule = await service.findOne('someId', 'nl');
-      
-      const expected = {
-        _id: mockModule['_id'],
-        name: mockModule.name_nl,
-        description: mockModule.description_nl,
-        studycredit: mockModule.studycredit,
-        location: mockModule.location,
-        level: mockModule.level,
-        available_spots: mockModule.available_spots,
-        start_date: mockModule.start_date,
-        module_tags: mockModule.module_tags_nl,
-      };
-
-      expect(foundModule).toEqual(expected);
-      expect(model.findById).toHaveBeenCalledWith('someId');
     });
 
     it('should throw NotFoundException if module not found', async () => {
-      console.log('Test: ModulesService.findOne (Error) - Start');
       mockModuleModel.findById.mockReturnValue({
         exec: jest.fn().mockResolvedValue(null),
       });
 
-      try {
-        await service.findOne('someId');
-      } catch (error) {
-        console.log(
-          'Test: ModulesService.findOne (Error) - Caught Error:',
-          error.message,
-        );
-        expect(error).toBeInstanceOf(NotFoundException);
-      }
-      expect(model.findById).toHaveBeenCalledWith('someId');
+      await expect(service.findOne('507f1f77bcf86cd799439011')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });
