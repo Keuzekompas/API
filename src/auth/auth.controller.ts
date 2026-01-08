@@ -6,12 +6,11 @@ import {
   Res,
   Ip,
   UseGuards,
-  Req,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { createJsonResponse } from '../utils/json-response';
 import { AuthDto } from './dtos/auth.dto';
-import type { Response, Request } from 'express';
+import type { Response } from 'express';
 import { LoginThrottlerGuard } from './guards/login-throttler.guard';
 
 @Controller('auth')
