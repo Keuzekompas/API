@@ -6,7 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { Model } from 'mongoose';
 import { LoginResponse } from './auth.interface';
 import { redisInstance } from '../utils/redis';
-import { PenaltyManager } from 'src/utils/penalty';
+import { PenaltyManager } from '../utils/penalty';
 
 @Injectable()
 export class AuthService {
