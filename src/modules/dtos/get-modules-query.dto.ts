@@ -1,4 +1,5 @@
-import { IsEnum, IsOptional } from 'class-validator';
+import { IsEnum, IsOptional, IsString, IsNumber, Min } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export enum Language {
   NL = 'nl',
@@ -6,9 +7,34 @@ export enum Language {
 }
 
 export class GetModulesQueryDto {
-  @IsOptional() // Optional, default is 'en'
+  @IsOptional()
   @IsEnum(Language, {
     message: 'Language must be "nl" or "en"',
   })
   lang?: string = 'en';
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  page?: number = 1;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  limit?: number = 10;
+
+  @IsOptional()
+  @IsString()
+  search?: string;
+
+  @IsOptional()
+  @IsString()
+  location?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  studycredit?: number;
 }

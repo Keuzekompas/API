@@ -22,8 +22,7 @@ export class ModulesController {
   async findAll(
     @Query() query: GetModulesQueryDto,
   ): Promise<JsonResponse<ModuleListDto[] | null>> {
-    const { lang } = query;
-    const modules = await this.modulesService.findAll(lang);
+    const modules = await this.modulesService.findAll(query);
     return createJsonResponse(200, 'Modules successfully retrieved', modules);
   }
 
