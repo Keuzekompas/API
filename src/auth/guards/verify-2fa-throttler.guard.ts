@@ -31,7 +31,6 @@ export class Verify2faThrottlerGuard extends BaseThrottlerGuard {
         }
       } catch (error) {
         // Token invalid, fall back to IP throttling
-        void error;
       }
     }
 
