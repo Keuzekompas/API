@@ -1,14 +1,9 @@
-import {
-  PipeTransform,
-  Injectable,
-  ArgumentMetadata,
-  BadRequestException,
-} from '@nestjs/common';
+import { PipeTransform, Injectable, ArgumentMetadata } from '@nestjs/common';
 import * as xss from 'xss';
 
 @Injectable()
 export class XssPipe implements PipeTransform {
-  // Velden die we NOOIT willen filteren (zoals bcrypt wachtwoorden)
+  // fields to skip during sanitization
   private readonly skipFields = [
     'password',
     'passwordConfirm',
@@ -17,7 +12,6 @@ export class XssPipe implements PipeTransform {
   ];
 
   transform(value: any, metadata: ArgumentMetadata) {
-    // Alleen body, query en params filteren
     if (metadata.type === 'custom' || !value) {
       return value;
     }
@@ -38,7 +32,7 @@ export class XssPipe implements PipeTransform {
       const sanitizedObj = {};
       for (const key in value) {
         if (this.skipFields.includes(key)) {
-          // Sla dit veld over (belangrijk voor bcrypt!)
+          // Skip sanitization for sensitive fields
           sanitizedObj[key] = value[key];
         } else {
           sanitizedObj[key] = this.sanitize(value[key]);

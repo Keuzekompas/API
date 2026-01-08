@@ -15,7 +15,7 @@ async function bootstrap() {
 
   app.use(cookieParser());
 
-  // 1. NoSQL Sanitize (Middleware - Draait als eerste)
+  // NoSQL Sanitize
   app.use((req, res, next) => {
     if (req.body) MongoSanitize.sanitize(req.body);
     if (req.params) MongoSanitize.sanitize(req.params);
@@ -23,7 +23,7 @@ async function bootstrap() {
     next();
   });
 
-  // 2. Input Sanitize & Validation (Pipes)
+  // Input Sanitize & Validation (Pipes)
   app.useGlobalPipes(
     new XssPipe(),
     new ValidationPipe({
@@ -36,7 +36,7 @@ async function bootstrap() {
   app.useGlobalFilters(new ApiExceptionFilter());
   app.setGlobalPrefix('api');
 
-  // 3. Output Sanitize (Interceptor - Draait als laatste voor de response)
+  // Output Sanitize (Interceptor - Runs last before the response)
   app.useGlobalInterceptors(new SanitizeOutputInterceptor());
 
   const allowedOrigins = process.env.CORS_ORIGIN?.split(',') || [];
