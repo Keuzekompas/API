@@ -29,8 +29,9 @@ export class Verify2faThrottlerGuard extends BaseThrottlerGuard {
           // Primary: Throttle by User ID to protect the account
           return `verify2fa:${decoded.userId}`;
         }
-      } catch (e) {
-        // Token invalid
+      } catch (error) {
+        // Token invalid, fall back to IP throttling
+        void error;
       }
     }
 

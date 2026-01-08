@@ -1,4 +1,4 @@
-import { Injectable, Inject, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Injectable, Inject, UnauthorizedException } from '@nestjs/common';
 import { UserRepository } from '../user/user.repository';
 import { UserDocument } from '../user/user.schema';
 import { JwtService } from '@nestjs/jwt';
@@ -8,7 +8,7 @@ import { LoginResponse } from './auth.interface';
 import { redisInstance } from '../utils/redis';
 import { PenaltyManager } from '../utils/penalty';
 import { MailService } from './mail.service';
-import * as crypto from 'crypto';
+import * as crypto from 'node:crypto';
 
 @Injectable()
 export class AuthService {
@@ -63,8 +63,10 @@ export class AuthService {
     let payload: any;
     try {
       payload = this.jwtService.verify(tempToken);
-    } catch (e) {
-      throw new UnauthorizedException('Invalid or expired session');
+    } catch (error) {
+      throw new UnauthorizedException('Invalid or expired session', {
+        cause: error,
+      });
     }
 
     if (!payload.isTemp) {
