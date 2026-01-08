@@ -5,7 +5,7 @@ export enum Language {
   EN = 'en',
 }
 
-export class GetModulesQueryDto {
+export class LanguageDto {
   @IsOptional() // Optional, default is 'en'
   @IsEnum(Language, {
     message: 'Language must be "nl" or "en"',

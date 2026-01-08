@@ -10,7 +10,7 @@ import { ModulesService } from './modules.service';
 import { createJsonResponse, JsonResponse } from '../utils/json-response';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { ModuleListDto, ModuleDetailDto } from './dtos/module-response.dto';
-import { GetModulesQueryDto } from './dtos/get-modules-query.dto';
+import { LanguageDto } from '../utils/dtos/lang.dto';
 import { isValidObjectId } from 'mongoose';
 
 @Controller('modules')
@@ -20,7 +20,7 @@ export class ModulesController {
   @UseGuards(AuthGuard)
   @Get()
   async findAll(
-    @Query() query: GetModulesQueryDto,
+    @Query() query: LanguageDto,
   ): Promise<JsonResponse<ModuleListDto[] | null>> {
     const { lang } = query;
     const modules = await this.modulesService.findAll(lang);
@@ -31,7 +31,7 @@ export class ModulesController {
   @Get(':id')
   async findOne(
     @Param('id') id: string,
-    @Query() query: GetModulesQueryDto,
+    @Query() query: LanguageDto,
   ): Promise<JsonResponse<ModuleDetailDto | null>> {
     if (!isValidObjectId(id)) {
       throw new BadRequestException('Invalid module ID format');
