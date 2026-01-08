@@ -7,6 +7,7 @@ import {
   Ip,
   UseGuards,
 } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { createJsonResponse } from '../utils/json-response';
 import { AuthDto } from './dtos/auth.dto';
@@ -18,6 +19,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @UseGuards(LoginThrottlerGuard)
+  @SkipThrottle({ default: true })
   @Post('/login')
   @HttpCode(200)
   async login(
