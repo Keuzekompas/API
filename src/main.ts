@@ -4,15 +4,18 @@ import * as MongoSanitize from 'express-mongo-sanitize';
 import cookieParser from 'cookie-parser';
 import { ApiExceptionFilter } from './utils/api-exception.filter';
 import { ValidationPipe } from '@nestjs/common';
+import { SanitizeOutputInterceptor } from './utils/sanitize-output.interceptor';
+import { XssPipe } from './utils/xss.pipe';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   const expressApp = app.getHttpAdapter().getInstance();
-  expressApp.set('trust proxy', 1); // Trust first proxy
+  expressApp.set('trust proxy', 1);
 
   app.use(cookieParser());
 
+  // 1. NoSQL Sanitize (Middleware - Draait als eerste)
   app.use((req, res, next) => {
     if (req.body) MongoSanitize.sanitize(req.body);
     if (req.params) MongoSanitize.sanitize(req.params);
@@ -20,27 +23,28 @@ async function bootstrap() {
     next();
   });
 
+  // 2. Input Sanitize & Validation (Pipes)
   app.useGlobalPipes(
+    new XssPipe(),
     new ValidationPipe({
-      whitelist: true, // Removes fields that are not in the DTO
-      forbidNonWhitelisted: true, // Throws error if there are unknown fields
-      transform: true, // Converts types (e.g., string to number)
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
     }),
   );
 
   app.useGlobalFilters(new ApiExceptionFilter());
   app.setGlobalPrefix('api');
 
-  const allowedOrigins = process.env.CORS_ORIGIN?.split(',') || [];
+  // 3. Output Sanitize (Interceptor - Draait als laatste voor de response)
+  app.useGlobalInterceptors(new SanitizeOutputInterceptor());
 
+  const allowedOrigins = process.env.CORS_ORIGIN?.split(',') || [];
   app.enableCors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps or Postman)
-      // or check if the origin is in the whitelist
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        // This blocks the request directly at the CORS level
         callback(new Error('Not allowed by CORS policy'));
       }
     },
