@@ -33,7 +33,6 @@ export class ModulesService {
       studycredit: module.studycredit,
       location: module.location,
       level: module.level,
-      available_spots: module.available_spots,
       start_date: module.start_date,
       module_tags: lang === 'nl' ? module.module_tags_nl : module.module_tags_en,
     };
