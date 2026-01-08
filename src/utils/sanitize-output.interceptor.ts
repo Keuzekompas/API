@@ -11,15 +11,15 @@ import * as FilterXSS from 'xss';
 
 @Injectable()
 export class SanitizeOutputInterceptor<T> implements NestInterceptor<T, T> {
-  private readonly logger = new Logger('SanitizeInterceptor');
-  private readonly blacklist = ['password', 'passwordConfirm', 'token'];
+  private readonly blacklist = ['password', 'passwordConfirm', 'token']; // fields to skip during sanitization
 
+  // Intercept the response before it's sent to the client (from the controller)
   intercept(context: ExecutionContext, next: CallHandler<T>): Observable<T> {
     const start = Date.now();
 
     return next.handle().pipe(
       map((data: T) => {
-        const result = this.sanitizeData(data) as T;
+        const result = this.sanitizeData(data) as T; // Sanitize the response data
         return result;
       }),
     );
@@ -27,9 +27,9 @@ export class SanitizeOutputInterceptor<T> implements NestInterceptor<T, T> {
 
   // Unknown because it can be anything (object, string, array, etc.)
   private sanitizeData(data: unknown): unknown {
-    if (data === null || data === undefined) {
-      return data;
-    }
+    if (data === null || data === undefined) return data; // Nothing to sanitize
+
+    // If it's an array, sanitize each item (recursively)
     if (Array.isArray(data)) {
       return data.map((item: unknown) => this.sanitizeData(item));
     }
@@ -37,10 +37,12 @@ export class SanitizeOutputInterceptor<T> implements NestInterceptor<T, T> {
     if (typeof data === 'object' && data !== null) {
       const sanitizedObject: Record<string, unknown> = {};
 
+      // Treat data as a generic object
       const obj = data as Record<string, unknown>;
 
       for (const key in obj) {
         if (this.blacklist.includes(key)) {
+          // Skip blacklisted fields
           sanitizedObject[key] = obj[key];
         } else {
           sanitizedObject[key] = this.sanitizeData(obj[key]);
@@ -49,6 +51,7 @@ export class SanitizeOutputInterceptor<T> implements NestInterceptor<T, T> {
       return sanitizedObject;
     }
 
+    // If it's a string, sanitize it via XSS filter
     if (typeof data === 'string') {
       return FilterXSS.filterXSS(data);
     }
