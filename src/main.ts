@@ -27,9 +27,9 @@ async function bootstrap() {
   app.useGlobalPipes(
     new XssPipe(),
     new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
+      whitelist: true, // Removes fields that are not in the DTO
+      forbidNonWhitelisted: true, // Throws error if there are unknown fields
+      transform: true, // Converts types (e.g., string to number)
     }),
   );
 
@@ -42,9 +42,12 @@ async function bootstrap() {
   const allowedOrigins = process.env.CORS_ORIGIN?.split(',') || [];
   app.enableCors({
     origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or Postman)
+      // or check if the origin is in the whitelist
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
+        // This blocks the request directly at the CORS level
         callback(new Error('Not allowed by CORS policy'));
       }
     },

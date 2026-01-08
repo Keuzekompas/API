@@ -10,35 +10,40 @@ import { map } from 'rxjs/operators';
 import * as FilterXSS from 'xss';
 
 @Injectable()
-export class SanitizeOutputInterceptor implements NestInterceptor {
+export class SanitizeOutputInterceptor<T> implements NestInterceptor<T, T> {
+  private readonly logger = new Logger('SanitizeInterceptor');
   private readonly blacklist = ['password', 'passwordConfirm', 'token'];
 
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    // Let op: any moet later weg
+  intercept(context: ExecutionContext, next: CallHandler<T>): Observable<T> {
     const start = Date.now();
+
     return next.handle().pipe(
-      map((data) => {
-        const result = this.sanitizeData(data);
-        Logger.log(`Sanitization duurde: ${Date.now() - start}ms`);
+      map((data: T) => {
+        const result = this.sanitizeData(data) as T;
         return result;
       }),
     );
   }
 
-  private sanitizeData(data: any): any {
-    if (data === null || data === undefined) return data;
-
+  // Unknown because it can be anything (object, string, array, etc.)
+  private sanitizeData(data: unknown): unknown {
+    if (data === null || data === undefined) {
+      return data;
+    }
     if (Array.isArray(data)) {
-      return data.map((item) => this.sanitizeData(item));
+      return data.map((item: unknown) => this.sanitizeData(item));
     }
 
-    if (typeof data === 'object') {
-      const sanitizedObject = {};
-      for (const key in data) {
+    if (typeof data === 'object' && data !== null) {
+      const sanitizedObject: Record<string, unknown> = {};
+
+      const obj = data as Record<string, unknown>;
+
+      for (const key in obj) {
         if (this.blacklist.includes(key)) {
-          sanitizedObject[key] = data[key];
+          sanitizedObject[key] = obj[key];
         } else {
-          sanitizedObject[key] = this.sanitizeData(data[key]);
+          sanitizedObject[key] = this.sanitizeData(obj[key]);
         }
       }
       return sanitizedObject;
