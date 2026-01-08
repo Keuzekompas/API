@@ -21,6 +21,7 @@ import { redisInstance } from './utils/redis';
       throttlers: [
         { name: 'default', ttl: 60000, limit: 60 }, // Global limit
         { name: 'loginAttempts', ttl: 60000, limit: 5 }, // login limit
+        { name: 'verify2fa', ttl: 60000, limit: 5 }, // 2FA verification limit
       ],
       storage: new ThrottlerStorageRedisService(redisInstance),
     }),
@@ -29,7 +30,7 @@ import { redisInstance } from './utils/redis';
   providers: [
     {
       provide: APP_GUARD,
-      useClass: IpThrottlerGuard, // Protects every route by IP
+      useClass: IpThrottlerGuard, 
     },
     AppService,
     ...databaseProviders,

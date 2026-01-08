@@ -4,15 +4,19 @@ import {
   HttpCode,
   Body,
   Res,
+  Req,
   Ip,
   UseGuards,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { createJsonResponse } from '../utils/json-response';
 import { AuthDto } from './dtos/auth.dto';
-import type { Response } from 'express';
+import { Verify2faDto } from './dtos/verify-2fa.dto';
+import type { Response, Request } from 'express';
 import { LoginThrottlerGuard } from './guards/login-throttler.guard';
+import { Verify2faThrottlerGuard } from './guards/verify-2fa-throttler.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -33,13 +37,64 @@ export class AuthController {
       ip,
     );
 
+    if (response.requires2FA) {
+      // Set temporary token in cookie
+      res.cookie('temp_token', response.tempToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax', // Needed for 2FA flow
+        maxAge: 5 * 60 * 1000, // 5 minutes
+      });
+
+      // Remove sensitive data from response body
+      const { tempToken, ...safeResponse } = response;
+      return createJsonResponse(200, '2FA required', safeResponse);
+    }
+
     res.cookie('token', response.token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
     });
 
-    return createJsonResponse(200, 'Login successful', response);
+    // Remove sensitive data from response body
+    const { token, ...safeResponse } = response;
+    return createJsonResponse(200, 'Login successful', safeResponse);
+  }
+
+  @UseGuards(Verify2faThrottlerGuard)
+  @SkipThrottle({ default: true })
+  @Post('/verify-2fa')
+  @HttpCode(200)
+  async verify2FA(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+    @Body() verifyDto: Verify2faDto,
+  ) {
+    const tempToken = req.cookies['temp_token'];
+
+    if (!tempToken) {
+        throw new UnauthorizedException('Session expired or invalid');
+    }
+
+    const response = await this.authService.verifyTwoFactor(
+      tempToken,
+      verifyDto.code,
+    );
+
+    // Clear the temporary token
+    res.clearCookie('temp_token');
+
+    // Set the real access token
+    res.cookie('token', response.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+    });
+
+    // Remove sensitive data from response body
+    const { token, ...safeResponse } = response;
+    return createJsonResponse(200, 'Login successful', safeResponse);
   }
 
   @Post('logout')
@@ -47,6 +102,11 @@ export class AuthController {
   logout(@Res({ passthrough: true }) res: Response) {
     res.clearCookie('token', { path: '/' });
     res.cookie('token', '', { httpOnly: true, maxAge: 0, path: '/' });
+    
+    // Also clear temp token just in case
+    res.clearCookie('temp_token', { path: '/' });
+    res.cookie('temp_token', '', { httpOnly: true, maxAge: 0, path: '/' });
+
     return createJsonResponse(200, 'Logout successful', null);
   }
 }
