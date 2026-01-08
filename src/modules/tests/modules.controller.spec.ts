@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ModulesController } from '../modules.controller';
 import { ModulesService } from '../modules.service';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
 import { AuthGuard } from '../../auth/guards/auth.guard';
 import { GetModulesQueryDto } from '../dtos/get-modules-query.dto';
 
@@ -33,7 +33,6 @@ describe('ModulesController', () => {
       .compile();
 
     modulesController = module.get<ModulesController>(ModulesController);
-    modulesService = module.get<ModulesService>(ModulesService);
   });
 
   describe('findAll', () => {
