@@ -6,12 +6,12 @@ import {
   Res,
   Ip,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { createJsonResponse } from '../utils/json-response';
 import { AuthDto } from './dtos/auth.dto';
-import type { Response } from 'express';
-import { Throttle } from '@nestjs/throttler';
+import type { Response, Request } from 'express';
 import { LoginThrottlerGuard } from './guards/login-throttler.guard';
 
 @Controller('auth')
@@ -19,7 +19,6 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @UseGuards(LoginThrottlerGuard)
-  @Throttle({ loginAttempts: {} })
   @Post('/login')
   @HttpCode(200)
   async login(
@@ -45,12 +44,8 @@ export class AuthController {
   @Post('logout')
   @HttpCode(200)
   logout(@Res({ passthrough: true }) res: Response) {
-    // Clear common cookie names used for tokens to be safe
     res.clearCookie('token', { path: '/' });
-
-    // also send an explicit expired cookie for non-Express clients/browsers
     res.cookie('token', '', { httpOnly: true, maxAge: 0, path: '/' });
-
     return createJsonResponse(200, 'Logout successful', null);
   }
 }
