@@ -1,25 +1,50 @@
+import { Test, TestingModule } from '@nestjs/testing';
 import { ModulesController } from '../modules.controller';
 import { ModulesService } from '../modules.service';
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
+import { AuthGuard } from '../../auth/guards/auth.guard';
+import { GetModulesQueryDto } from '../dtos/get-modules-query.dto';
 
 describe('ModulesController', () => {
   let modulesController: ModulesController;
   let modulesService: ModulesService;
 
-  beforeEach(() => {
-    const mockModuleModel = {};
-    modulesService = new ModulesService(mockModuleModel as any);
-    modulesController = new ModulesController(modulesService);
+  const mockModulesService = {
+    findAll: jest.fn(),
+    findOne: jest.fn(),
+  };
+
+  const mockAuthGuard = {
+    canActivate: jest.fn(() => true),
+  };
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [ModulesController],
+      providers: [
+        {
+          provide: ModulesService,
+          useValue: mockModulesService,
+        },
+      ],
+    })
+      .overrideGuard(AuthGuard)
+      .useValue(mockAuthGuard)
+      .compile();
+
+    modulesController = module.get<ModulesController>(ModulesController);
   });
 
   describe('findAll', () => {
-    it('should return an array of modules', async () => {
-      console.log('Test: ModulesController.findAll - Start');
-      const result = [{ name: 'Module1' }, { name: 'Module2' }];
-      jest.spyOn(modulesService, 'findAll').mockResolvedValue(result as any);
+    it('should pass query params to service and return result', async () => {
+      const result = [{ name: 'Module1' }];
+      const query: GetModulesQueryDto = { lang: 'en', page: 1, limit: 10 };
+      
+      mockModulesService.findAll.mockResolvedValue(result);
 
-      const response = await modulesController.findAll({lang: 'nl'});
-      console.log('Test: ModulesController.findAll - Response:', response);
+      const response = await modulesController.findAll(query);
+
+      expect(mockModulesService.findAll).toHaveBeenCalledWith(query);
       expect(response).toEqual({
         status: 200,
         message: 'Modules successfully retrieved',
@@ -30,14 +55,15 @@ describe('ModulesController', () => {
 
   describe('findOne', () => {
     it('should return a single module', async () => {
-      console.log('Test: ModulesController.findOne - Start');
       const result = { name: 'Module1' };
-      jest.spyOn(modulesService, 'findOne').mockResolvedValue(result as any);
+      mockModulesService.findOne.mockResolvedValue(result);
 
-      // Use a valid MongoDB ObjectId
       const validId = '507f1f77bcf86cd799439011';
-      const response = await modulesController.findOne(validId, {lang: 'nl'});
-      console.log('Test: ModulesController.findOne - Response:', response);
+      const query: GetModulesQueryDto = { lang: 'en' };
+      
+      const response = await modulesController.findOne(validId, query);
+
+      expect(mockModulesService.findOne).toHaveBeenCalledWith(validId, 'en');
       expect(response).toEqual({
         status: 200,
         message: 'Module successfully retrieved',
@@ -45,23 +71,13 @@ describe('ModulesController', () => {
       });
     });
 
-    it('should throw NotFoundException with status 404 if module not found', async () => {
-      console.log('Test: ModulesController.findOne (Error) - Start');
-      jest
-        .spyOn(modulesService, 'findOne')
-        .mockRejectedValue(new NotFoundException('Module not found'));
-
-      try {
-        const validId = '694163f6883e9f202ef8f367';
-        await modulesController.findOne(validId, {lang: 'nl'});
-      } catch (error) {
-        console.log(
-          'Test: ModulesController.findOne (Error) - Caught Error:',
-          error.message,
+    it('should throw BadRequestException for invalid ID', async () => {
+        const invalidId = 'invalid-id';
+        const query: GetModulesQueryDto = { lang: 'en' };
+        
+        await expect(modulesController.findOne(invalidId, query)).rejects.toThrow(
+          BadRequestException,
         );
-        expect(error).toBeInstanceOf(NotFoundException);
-        expect(error.getStatus()).toBe(404);
-      }
-    });
+      });
   });
 });

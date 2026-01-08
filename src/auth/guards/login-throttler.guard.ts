@@ -7,9 +7,16 @@ import { ThrottlerRequest } from '@nestjs/throttler';
 @Injectable()
 export class LoginThrottlerGuard extends BaseThrottlerGuard {
   protected getTargetKey(request: Request): string {
-    const email = request.body?.email?.toLowerCase();
+    const { body } = request;
     const ip = request.ip ?? request.socket.remoteAddress ?? 'unknown';
-    return email ? `account:${email}` : `ip:${ip}`;
+
+    // Check if email exists AND is a string
+    if (body && typeof body.email === 'string') {
+      const email = body.email.toLowerCase();
+      return `account:${email}`;
+    }
+
+    return `ip:${ip}`; // Fallback to IP-based throttling
   }
 
   protected async handleRequest(
