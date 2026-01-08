@@ -1,7 +1,6 @@
-import { AuthGuard } from '../auth.guard';
+import { AuthGuard } from '../guards/auth.guard';
 import { JwtService } from '@nestjs/jwt';
 import { UnauthorizedException, ExecutionContext } from '@nestjs/common';
-
 
 describe('AuthGuard', () => {
   let authGuard: AuthGuard;
@@ -21,7 +20,7 @@ describe('AuthGuard', () => {
           cookies,
         }),
       }),
-    } as ExecutionContext);
+    }) as ExecutionContext;
 
   it('should allow access if token is valid (Authorization)', async () => {
     const context = mockContext({ token: 'valid.token' });
@@ -31,7 +30,10 @@ describe('AuthGuard', () => {
     const result = await authGuard.canActivate(context);
 
     expect(result).toBe(true);
-    expect(jwtService.verifyAsync).toHaveBeenCalledWith('valid.token', expect.any(Object));
+    expect(jwtService.verifyAsync).toHaveBeenCalledWith(
+      'valid.token',
+      expect.any(Object),
+    );
   });
 
   it('should throw UnauthorizedException if no token provided', async () => {
@@ -44,7 +46,9 @@ describe('AuthGuard', () => {
 
   it('should throw UnauthorizedException if token is expired (Session Expiration)', async () => {
     const context = mockContext({ token: 'expired.token' });
-    (jwtService.verifyAsync as jest.Mock).mockRejectedValue(new Error('TokenExpiredError'));
+    (jwtService.verifyAsync as jest.Mock).mockRejectedValue(
+      new Error('TokenExpiredError'),
+    );
 
     await expect(authGuard.canActivate(context)).rejects.toThrow(
       new UnauthorizedException('Invalid token or expired'),

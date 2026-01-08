@@ -14,7 +14,7 @@ import {
 import { UserService } from './user.service';
 import { UserInterface } from './user.interface';
 import { createJsonResponse, JsonResponse } from '../utils/json-response';
-import { AuthGuard } from '../auth/auth.guard';
+import { AuthGuard } from '../auth/guards/auth.guard';
 import { ModuleListDto } from 'src/modules/dtos/module-response.dto';
 import { isValidObjectId } from 'mongoose';
 

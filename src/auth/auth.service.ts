@@ -5,6 +5,8 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { Model } from 'mongoose';
 import { LoginResponse } from './auth.interface';
+import { redisInstance } from '../utils/redis';
+import { PenaltyManager } from 'src/utils/penalty';
 
 @Injectable()
 export class AuthService {
@@ -14,7 +16,11 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async login(email: string, password: string): Promise<LoginResponse> {
+  async login(
+    email: string,
+    password: string,
+    ip: string,
+  ): Promise<LoginResponse> {
     const user = await this.userRepository.findByEmail(email);
     const passwordMatch = user
       ? await bcrypt.compare(password, user.password)
@@ -23,6 +29,11 @@ export class AuthService {
     if (!user || !passwordMatch) {
       throw new UnauthorizedException('Invalid email or password');
     }
+
+    // Login successful, reset throttle penalty
+    await PenaltyManager.resetPenalty(`ip:${ip}`);
+
+    await PenaltyManager.resetPenalty(`account:${email.toLowerCase()}`);
 
     const token = this.jwtService.sign({ userId: user._id.toString() });
     return {
