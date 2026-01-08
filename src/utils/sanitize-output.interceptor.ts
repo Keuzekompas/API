@@ -3,7 +3,6 @@ import {
   NestInterceptor,
   ExecutionContext,
   CallHandler,
-  Logger,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -15,8 +14,6 @@ export class SanitizeOutputInterceptor<T> implements NestInterceptor<T, T> {
 
   // Intercept the response before it's sent to the client (from the controller)
   intercept(context: ExecutionContext, next: CallHandler<T>): Observable<T> {
-    const start = Date.now();
-
     return next.handle().pipe(
       map((data: T) => {
         const result = this.sanitizeData(data) as T; // Sanitize the response data
