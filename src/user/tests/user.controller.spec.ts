@@ -7,7 +7,6 @@ import { Types } from 'mongoose';
 
 describe('UserController', () => {
   let controller: UserController;
-  let userService: UserService;
 
   const mockUserService = {
     getFavorites: jest.fn(),
@@ -35,7 +34,6 @@ describe('UserController', () => {
       .compile();
 
     controller = module.get<UserController>(UserController);
-    userService = module.get<UserService>(UserService);
   });
 
   afterEach(() => {

@@ -4,7 +4,6 @@ import { UserRepository } from '../../user/user.repository';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { PenaltyManager } from '../../utils/penalty';
 
 // Mock bcrypt to avoid hashing calculation time
 jest.mock('bcrypt');
