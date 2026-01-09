@@ -25,7 +25,7 @@ export class ApiExceptionFilter implements ExceptionFilter {
 
       message =
         typeof exceptionResponse === 'object' && 'message' in exceptionResponse
-          ? (exceptionResponse as any).message
+          ? (exceptionResponse as any).message //Find out what type of message this can be to remove usage of any
           : exception.message;
     } else {
       // Step 3: It is an unexpected error (e.g., your CastError or a bug)
