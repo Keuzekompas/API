@@ -22,7 +22,7 @@ export class ModulesService {
       studycredit,
     } = query;
 
-    const filter: any = {};
+    const filter: any = {}; // Interface for filter to remove usage of any
 
     if (search) {
       const searchRegex = { $regex: search, $options: 'i' };
