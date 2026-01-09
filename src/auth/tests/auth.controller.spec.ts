@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from '../auth.controller';
 import { AuthService } from '../auth.service';
 import { Response } from 'express';
+import { LoginThrottlerGuard } from '../guards/login-throttler.guard';
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -16,6 +17,10 @@ describe('AuthController', () => {
     clearCookie: jest.fn(),
   } as unknown as Response;
 
+  const mockLoginThrottlerGuard = {
+    canActivate: jest.fn(() => true),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
@@ -25,7 +30,10 @@ describe('AuthController', () => {
           useValue: mockAuthService,
         },
       ],
-    }).compile();
+    })
+      .overrideGuard(LoginThrottlerGuard)
+      .useValue(mockLoginThrottlerGuard)
+      .compile();
 
     controller = module.get<AuthController>(AuthController);
   });
@@ -37,9 +45,9 @@ describe('AuthController', () => {
       
       mockAuthService.login.mockResolvedValue(loginResult);
 
-      await controller.login(mockResponse, authDto);
+      await controller.login(mockResponse, authDto, '127.0.0.1');
 
-      expect(mockAuthService.login).toHaveBeenCalledWith(authDto.email, authDto.password);
+      expect(mockAuthService.login).toHaveBeenCalledWith(authDto.email, authDto.password, '127.0.0.1');
       expect(mockResponse.cookie).toHaveBeenCalledWith('token', 'abc-token', expect.objectContaining({
         httpOnly: true,
       }));

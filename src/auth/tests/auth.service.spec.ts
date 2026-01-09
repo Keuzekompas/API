@@ -8,6 +8,19 @@ import * as bcrypt from 'bcrypt';
 // Mock bcrypt to avoid hashing calculation time
 jest.mock('bcrypt');
 
+// Mock Redis and PenaltyManager to prevent real connections
+jest.mock('../../utils/redis', () => ({
+  redisInstance: {},
+}));
+
+jest.mock('../../utils/penalty', () => ({
+  PenaltyManager: {
+    getBlockData: jest.fn().mockResolvedValue({ isBlocked: false, timeLeft: 0 }),
+    applyPenalty: jest.fn(),
+    resetPenalty: jest.fn(),
+  },
+}));
+
 describe('AuthService', () => {
   let service: AuthService;
   let jwtService: JwtService;
@@ -55,7 +68,7 @@ describe('AuthService', () => {
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
       // Act
-      const result = await service.login('test@example.com', 'password');
+      const result = await service.login('test@example.com', 'password', '127.0.0.1');
 
       // Assert
       expect(result).toHaveProperty('token');
@@ -66,7 +79,7 @@ describe('AuthService', () => {
     it('should throw UnauthorizedException if user not found', async () => {
       mockUserRepository.findByEmail.mockResolvedValue(null);
 
-      await expect(service.login('wrong@email.com', 'password')).rejects.toThrow(
+      await expect(service.login('wrong@email.com', 'password', '127.0.0.1')).rejects.toThrow(
         UnauthorizedException,
       );
     });
@@ -75,7 +88,7 @@ describe('AuthService', () => {
       mockUserRepository.findByEmail.mockResolvedValue(mockUser);
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
-      await expect(service.login('test@student.avans.nl', 'wrongPass')).rejects.toThrow(
+      await expect(service.login('test@student.avans.nl', 'wrongPass', '127.0.0.1')).rejects.toThrow(
         UnauthorizedException,
       );
     });
@@ -84,7 +97,7 @@ describe('AuthService', () => {
       mockUserRepository.findByEmail.mockResolvedValue(mockUser);
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
-      const { token } = await service.login('test@student.avans.nl', 'password');
+      const { token } = await service.login('test@student.avans.nl', 'password', '127.0.0.1');
       const decoded: any = jwtService.decode(token);
 
       expect(decoded).toHaveProperty('exp');
