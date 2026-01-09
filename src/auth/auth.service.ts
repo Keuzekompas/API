@@ -60,7 +60,7 @@ export class AuthService {
   }
 
   async verifyTwoFactor(tempToken: string, code: string): Promise<LoginResponse> {
-    let payload: any;
+    let payload: { userId: string; isTemp: boolean };
     try {
       payload = this.jwtService.verify(tempToken);
     } catch (error) {
