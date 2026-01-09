@@ -17,6 +17,7 @@ import { createJsonResponse, JsonResponse } from '../utils/json-response';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { ModuleListDto } from 'src/modules/dtos/module-response.dto';
 import { isValidObjectId } from 'mongoose';
+import { LanguageDto } from 'src/utils/dtos/lang.dto';
 
 @Controller('user')
 export class UserController {
@@ -44,8 +45,9 @@ export class UserController {
   @Get('favorites')
   async getFavoriteModules(
     @Request() req,
-    @Query('lang') lang: string,
+    @Query() query: LanguageDto,
   ): Promise<JsonResponse<ModuleListDto[] | null>> {
+    const { lang } = query;
     const userId = req.user?.userId;
     if (!userId) {
       throw new UnauthorizedException('Not logged in');
