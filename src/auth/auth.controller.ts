@@ -18,6 +18,16 @@ import type { Response, Request } from 'express';
 import { LoginThrottlerGuard } from './guards/login-throttler.guard';
 import { Verify2faThrottlerGuard } from './guards/verify-2fa-throttler.guard';
 
+const setTokenCookie = (
+    res: Response, token: string | undefined
+  ) => {
+  res.cookie('token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+  });
+}
+
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -51,11 +61,7 @@ export class AuthController {
       return createJsonResponse(200, '2FA required', safeResponse);
     }
 
-    res.cookie('token', response.token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-    });
+    setTokenCookie(res, response.token);
 
     // Remove sensitive data from response body
     const { token, ...safeResponse } = response;
@@ -86,11 +92,7 @@ export class AuthController {
     res.clearCookie('temp_token');
 
     // Set the real access token
-    res.cookie('token', response.token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-    });
+    setTokenCookie(res, response.token);
 
     // Remove sensitive data from response body
     const { token, ...safeResponse } = response;
