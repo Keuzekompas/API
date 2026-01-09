@@ -5,6 +5,7 @@ import { UserRepository } from '../user/user.repository';
 import { DatabaseModule } from '../database/database.module';
 import { userProviders } from '../user/user.providers';
 import { JwtModule } from '@nestjs/jwt';
+import { MailService } from './mail.service';
 
 @Module({
   imports: [
@@ -16,7 +17,7 @@ import { JwtModule } from '@nestjs/jwt';
       }),
     }),
   ],
-  providers: [AuthService, UserRepository, ...userProviders],
+  providers: [AuthService, UserRepository, ...userProviders, MailService],
   controllers: [AuthController],
   exports: [JwtModule],
 })
