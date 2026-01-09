@@ -13,7 +13,6 @@ export interface ModuleDetailDto {
   studycredit: number;
   location: string;
   level: string;
-  available_spots: number;
   start_date: Date;
   module_tags: string[];
 }

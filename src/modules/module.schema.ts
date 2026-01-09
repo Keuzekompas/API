@@ -27,9 +27,6 @@ export class Module {
   start_date: Date;
 
   @Prop()
-  available_spots: number;
-
-  @Prop()
   name_nl: string;
 
   @Prop()

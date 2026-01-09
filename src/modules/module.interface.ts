@@ -8,7 +8,6 @@ export interface Module extends Document {
   readonly level: string;
   readonly module_tags_en: string[];
   readonly start_date: Date;
-  readonly available_spots: number;
   readonly name_nl: string;
   readonly description_nl: string;
   readonly module_tags_nl: string[];
