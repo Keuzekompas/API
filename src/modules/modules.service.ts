@@ -1,7 +1,7 @@
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException, Logger } from '@nestjs/common';
 import { Model } from 'mongoose';
 import { Module } from './module.interface';
-import { ModuleListDto, ModuleDetailDto } from './dtos/module-response.dto';
+import { ModuleDetailDto } from './dtos/module-response.dto';
 import { GetModulesQueryDto } from './dtos/get-modules-query.dto';
 import { PaginatedModuleListDto } from './dtos/paginated-module-response.dto';
 
@@ -78,7 +78,7 @@ export class ModulesService {
       studycredit: module.studycredit,
       location: module.location,
       level: module.level,
-      start_date: module.start_date,
+      start_date: module.start_date.toISOString(),
       module_tags:
         lang === 'nl' ? module.module_tags_nl : module.module_tags_en,
     };
