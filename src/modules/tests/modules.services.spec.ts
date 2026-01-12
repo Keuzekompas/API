@@ -27,6 +27,9 @@ describe('ModulesService', () => {
   const mockModuleModel = {
     find: jest.fn(),
     findById: jest.fn(),
+    countDocuments: jest.fn().mockReturnValue({
+      exec: jest.fn().mockResolvedValue(1),
+    }),
   };
 
   beforeEach(async () => {
@@ -64,13 +67,18 @@ describe('ModulesService', () => {
 
       const modules = await service.findAll(query);
 
-      const expected = [{
-        _id: mockModule._id,
-        name: mockModule.name_en,
-        description: mockModule.description_en,
-        studycredit: mockModule.studycredit,
-        location: mockModule.location,
-      }];
+      const expected = {
+        modules: [{
+          _id: mockModule._id,
+          name: mockModule.name_en,
+          description: mockModule.description_en,
+          studycredit: mockModule.studycredit,
+          location: mockModule.location,
+        }],
+        total: 1,
+        page: 1,
+        limit: 10,
+      };
 
       expect(modules).toEqual(expected);
       expect(mockModuleModel.find).toHaveBeenCalledWith({});
@@ -124,7 +132,6 @@ describe('ModulesService', () => {
         studycredit: mockModule.studycredit,
         location: mockModule.location,
         level: mockModule.level,
-        available_spots: mockModule.available_spots,
         start_date: mockModule.start_date,
         module_tags: mockModule.module_tags_en,
       };

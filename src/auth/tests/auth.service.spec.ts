@@ -4,13 +4,19 @@ import { UserRepository } from '../../user/user.repository';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import { redisInstance } from '../../utils/redis';
+import { MailService } from '../mail.service';
 
 // Mock bcrypt to avoid hashing calculation time
 jest.mock('bcrypt');
 
-// Mock Redis and PenaltyManager to prevent real connections
+// Mock Redis
 jest.mock('../../utils/redis', () => ({
-  redisInstance: {},
+  redisInstance: {
+    get: jest.fn(),
+    setex: jest.fn(),
+    del: jest.fn(),
+  },
 }));
 
 jest.mock('../../utils/penalty', () => ({
@@ -37,6 +43,10 @@ describe('AuthService', () => {
     findById: jest.fn(),
   };
 
+  const mockMailService = {
+    sendTwoFactorCode: jest.fn(),
+  };
+
   const mockUserModel = {}; // Mock for @Inject('USER_MODEL')
 
   beforeEach(async () => {
@@ -51,6 +61,7 @@ describe('AuthService', () => {
         AuthService,
         { provide: UserRepository, useValue: mockUserRepository },
         { provide: 'USER_MODEL', useValue: mockUserModel },
+        { provide: MailService, useValue: mockMailService },
       ],
     }).compile();
 
@@ -62,18 +73,21 @@ describe('AuthService', () => {
   });
 
   describe('login', () => {
-    it('should return a JWT token and user ID on successful login', async () => {
+    it('should return 2FA requirement and temp token on successful credentials', async () => {
       // Arrange
       mockUserRepository.findByEmail.mockResolvedValue(mockUser);
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      (redisInstance.setex as jest.Mock).mockResolvedValue('OK');
 
       // Act
-      const result = await service.login('test@example.com', 'password', '127.0.0.1');
+      const result = await service.login('test@student.avans.nl', 'password', '127.0.0.1');
 
       // Assert
-      expect(result).toHaveProperty('token');
-      expect(result.user).toHaveProperty('id', mockUser._id);
-      expect(userRepository.findByEmail).toHaveBeenCalledWith('test@example.com');
+      expect(result).toHaveProperty('requires2FA', true);
+      expect(result).toHaveProperty('tempToken');
+      expect(userRepository.findByEmail).toHaveBeenCalledWith('test@student.avans.nl');
+      expect(mockMailService.sendTwoFactorCode).toHaveBeenCalled();
+      expect(redisInstance.setex).toHaveBeenCalled();
     });
 
     it('should throw UnauthorizedException if user not found', async () => {
@@ -92,19 +106,41 @@ describe('AuthService', () => {
         UnauthorizedException,
       );
     });
+  });
 
-    it('should generate a token with correct Session Length (1 hour)', async () => {
-      mockUserRepository.findByEmail.mockResolvedValue(mockUser);
-      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+  describe('verifyTwoFactor', () => {
+    it('should return user and token on valid 2FA code', async () => {
+      // 1. Setup valid temp token
+      const userId = mockUser._id;
+      const tempToken = jwtService.sign({ userId, isTemp: true });
 
-      const { token } = await service.login('test@student.avans.nl', 'password', '127.0.0.1');
-      const decoded: any = jwtService.decode(token);
+      // 2. Setup Redis mock to return matching code
+      const code = '123456';
+      (redisInstance.get as jest.Mock).mockResolvedValue(code);
+      (redisInstance.del as jest.Mock).mockResolvedValue(1);
 
+      // Act
+      const result = await service.verifyTwoFactor(tempToken, code);
+
+      // Assert
+      expect(result).toHaveProperty('token');
+      expect(result.user).toHaveProperty('id', userId);
+      
+      // Check session length
+      const decoded: any = jwtService.decode(result.token!);
       expect(decoded).toHaveProperty('exp');
       expect(decoded).toHaveProperty('iat');
-      
-      const sessionLength = decoded.exp - decoded.iat;
-      expect(sessionLength).toBe(3600); 
+      expect(decoded.exp - decoded.iat).toBe(3600); // 1 hour
+    });
+
+    it('should throw UnauthorizedException on invalid 2FA code', async () => {
+      const userId = mockUser._id;
+      const tempToken = jwtService.sign({ userId, isTemp: true });
+      (redisInstance.get as jest.Mock).mockResolvedValue('123456');
+
+      await expect(service.verifyTwoFactor(tempToken, '000000')).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
   });
 });
