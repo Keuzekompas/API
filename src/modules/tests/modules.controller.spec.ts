@@ -37,7 +37,12 @@ describe('ModulesController', () => {
 
   describe('findAll', () => {
     it('should pass query params to service and return result', async () => {
-      const result = [{ name: 'Module1' }];
+      const result = {
+        modules: [{ name: 'Module1' }],
+        total: 1,
+        page: 1,
+        limit: 10,
+      };
       const query: GetModulesQueryDto = { lang: 'en', page: 1, limit: 10 };
       
       mockModulesService.findAll.mockResolvedValue(result);

@@ -49,7 +49,7 @@ describe('UserController', () => {
       mockUserService.getFavorites.mockResolvedValue(mockModules);
 
       const req = { user: { userId } };
-      const result = await controller.getFavoriteModules(req, 'en');
+      const result = await controller.getFavoriteModules(req, { lang: 'en' });
 
       expect(result).toEqual({
         status: 200,
@@ -61,7 +61,7 @@ describe('UserController', () => {
 
     it('should throw UnauthorizedException if no user is logged in', async () => {
       const req = { user: {} };
-      await expect(controller.getFavoriteModules(req, 'en')).rejects.toThrow(UnauthorizedException);
+      await expect(controller.getFavoriteModules(req, { lang: 'en' })).rejects.toThrow(UnauthorizedException);
     });
 
     it('should throw NotFoundException if user is not found', async () => {
@@ -69,7 +69,7 @@ describe('UserController', () => {
       mockUserService.getFavorites.mockResolvedValue(null);
 
       const req = { user: { userId } };
-      await expect(controller.getFavoriteModules(req, 'en')).rejects.toThrow(NotFoundException);
+      await expect(controller.getFavoriteModules(req, { lang: 'en' })).rejects.toThrow(NotFoundException);
     });
   });
 
