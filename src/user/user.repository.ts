@@ -21,7 +21,6 @@ export class UserRepository {
   async findWithFavorites(id: string): Promise<UserInterface | null> {
     return this.userModel
       .findById(id)
-      .populate('favoriteModules')
       .select('-password -__v')
       .lean<UserInterface>()
       .exec();

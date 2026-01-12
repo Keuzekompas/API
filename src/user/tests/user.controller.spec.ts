@@ -43,25 +43,24 @@ describe('UserController', () => {
   describe('getFavoriteModules', () => {
     it('should return favorite modules', async () => {
       const userId = 'someUserId';
-      const mockModules = [
-        { _id: '1', name: 'Module 1', description: 'Desc 1', studycredit: 3, location: 'Loc 1' },
-      ];
-      mockUserService.getFavorites.mockResolvedValue(mockModules);
+      const mockModules = ['1', '2'];
+      const mockResponse = { favorites: mockModules };
+      mockUserService.getFavorites.mockResolvedValue(mockResponse);
 
       const req = { user: { userId } };
-      const result = await controller.getFavoriteModules(req, { lang: 'en' });
+      const result = await controller.getFavoriteModules(req);
 
       expect(result).toEqual({
         status: 200,
         message: 'Favorite modules successfully retrieved',
-        data: mockModules,
+        data: mockResponse,
       });
-      expect(mockUserService.getFavorites).toHaveBeenCalledWith(userId, 'en');
+      expect(mockUserService.getFavorites).toHaveBeenCalledWith(userId);
     });
 
     it('should throw UnauthorizedException if no user is logged in', async () => {
       const req = { user: {} };
-      await expect(controller.getFavoriteModules(req, { lang: 'en' })).rejects.toThrow(UnauthorizedException);
+      await expect(controller.getFavoriteModules(req)).rejects.toThrow(UnauthorizedException);
     });
 
     it('should throw NotFoundException if user is not found', async () => {
@@ -69,7 +68,7 @@ describe('UserController', () => {
       mockUserService.getFavorites.mockResolvedValue(null);
 
       const req = { user: { userId } };
-      await expect(controller.getFavoriteModules(req, { lang: 'en' })).rejects.toThrow(NotFoundException);
+      await expect(controller.getFavoriteModules(req)).rejects.toThrow(NotFoundException);
     });
   });
 

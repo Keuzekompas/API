@@ -4,5 +4,5 @@ export interface UserInterface {
   id: string;
   email: string;
   name: string;
-  favoriteModules: string[] | Module[];
+  favoriteModules: string[];
 }
