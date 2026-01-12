@@ -15,9 +15,9 @@ import { UserService } from './user.service';
 import { UserInterface } from './user.interface';
 import { createJsonResponse, JsonResponse } from '../utils/json-response';
 import { AuthGuard } from '../auth/guards/auth.guard';
-import { ModuleListDto } from 'src/modules/dtos/module-response.dto';
+import { ModuleListDto } from '../modules/dtos/module-response.dto';
 import { isValidObjectId } from 'mongoose';
-import { LanguageDto } from 'src/utils/dtos/lang.dto';
+import { LanguageDto } from '../utils/dtos/lang.dto';
 
 @Controller('user')
 export class UserController {
