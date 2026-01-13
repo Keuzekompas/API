@@ -2,7 +2,6 @@ import {
   Controller,
   Get,
   NotFoundException,
-  Query,
   Request,
   UnauthorizedException,
   UseGuards,
@@ -15,9 +14,8 @@ import { UserService } from './user.service';
 import { UserInterface } from './user.interface';
 import { createJsonResponse, JsonResponse } from '../utils/json-response';
 import { AuthGuard } from '../auth/guards/auth.guard';
-import { ModuleListDto } from 'src/modules/dtos/module-response.dto';
 import { isValidObjectId } from 'mongoose';
-import { LanguageDto } from 'src/utils/dtos/lang.dto';
+import { FavoritesResponseDto } from './dtos/favorites-response.dto';
 
 @Controller('user')
 export class UserController {
@@ -45,15 +43,13 @@ export class UserController {
   @Get('favorites')
   async getFavoriteModules(
     @Request() req,
-    @Query() query: LanguageDto,
-  ): Promise<JsonResponse<ModuleListDto[] | null>> {
-    const { lang } = query;
+  ): Promise<JsonResponse<FavoritesResponseDto | null>> {
     const userId = req.user?.userId;
     if (!userId) {
       throw new UnauthorizedException('Not logged in');
     }
 
-    const favorites = await this.userService.getFavorites(userId, lang);
+    const favorites = await this.userService.getFavorites(userId);
     if (!favorites) {
       throw new NotFoundException('User not found');
     }
