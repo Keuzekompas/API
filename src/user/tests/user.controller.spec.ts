@@ -2,7 +2,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UserController } from '../user.controller';
 import { UserService } from '../user.service';
 import { AuthGuard } from '../../auth/guards/auth.guard';
-import { UnauthorizedException, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  UnauthorizedException,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { Types } from 'mongoose';
 
 describe('UserController', () => {
@@ -77,7 +81,10 @@ describe('UserController', () => {
 
     it('should add a favorite module', async () => {
       const userId = 'someUserId';
-      mockUserService.addFavorite.mockResolvedValue({ id: userId, favoriteModules: [validModuleId] });
+      mockUserService.addFavorite.mockResolvedValue({
+        id: userId,
+        favoriteModules: [validModuleId],
+      });
 
       const req = { user: { userId } };
       const result = await controller.addFavorite(req, validModuleId);
@@ -87,17 +94,24 @@ describe('UserController', () => {
         message: 'Module added to favorites',
         data: {},
       });
-      expect(mockUserService.addFavorite).toHaveBeenCalledWith(userId, validModuleId);
+      expect(mockUserService.addFavorite).toHaveBeenCalledWith(
+        userId,
+        validModuleId,
+      );
     });
 
     it('should throw BadRequestException for invalid module ID', async () => {
       const req = { user: { userId: 'someUserId' } };
-      await expect(controller.addFavorite(req, 'invalidId')).rejects.toThrow(BadRequestException);
+      await expect(controller.addFavorite(req, 'invalidId')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw UnauthorizedException if no user is logged in', async () => {
       const req = { user: {} };
-      await expect(controller.addFavorite(req, validModuleId)).rejects.toThrow(UnauthorizedException);
+      await expect(controller.addFavorite(req, validModuleId)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('should throw NotFoundException if user is not found', async () => {
@@ -105,7 +119,9 @@ describe('UserController', () => {
       mockUserService.addFavorite.mockResolvedValue(null);
 
       const req = { user: { userId } };
-      await expect(controller.addFavorite(req, validModuleId)).rejects.toThrow(NotFoundException);
+      await expect(controller.addFavorite(req, validModuleId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -114,7 +130,10 @@ describe('UserController', () => {
 
     it('should remove a favorite module', async () => {
       const userId = 'someUserId';
-      mockUserService.removeFavorite.mockResolvedValue({ id: userId, favoriteModules: [] });
+      mockUserService.removeFavorite.mockResolvedValue({
+        id: userId,
+        favoriteModules: [],
+      });
 
       const req = { user: { userId } };
       const result = await controller.removeFavorite(req, validModuleId);
@@ -124,17 +143,24 @@ describe('UserController', () => {
         message: 'Module removed from favorites',
         data: {},
       });
-      expect(mockUserService.removeFavorite).toHaveBeenCalledWith(userId, validModuleId);
+      expect(mockUserService.removeFavorite).toHaveBeenCalledWith(
+        userId,
+        validModuleId,
+      );
     });
 
     it('should throw BadRequestException for invalid module ID', async () => {
       const req = { user: { userId: 'someUserId' } };
-      await expect(controller.removeFavorite(req, 'invalidId')).rejects.toThrow(BadRequestException);
+      await expect(controller.removeFavorite(req, 'invalidId')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw UnauthorizedException if no user is logged in', async () => {
       const req = { user: {} };
-      await expect(controller.removeFavorite(req, validModuleId)).rejects.toThrow(UnauthorizedException);
+      await expect(
+        controller.removeFavorite(req, validModuleId),
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it('should throw NotFoundException if user is not found', async () => {
@@ -142,7 +168,52 @@ describe('UserController', () => {
       mockUserService.removeFavorite.mockResolvedValue(null);
 
       const req = { user: { userId } };
-      await expect(controller.removeFavorite(req, validModuleId)).rejects.toThrow(NotFoundException);
+      await expect(
+        controller.removeFavorite(req, validModuleId),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
+  describe('getProfile', () => {
+    it('should return the user profile successfully', async () => {
+      const userId = 'user123';
+      const mockUser = {
+        id: userId,
+        email: 'test@student.avans.nl',
+        name: 'Test Gebruiker',
+        favoriteModules: [],
+      };
+
+      mockUserService.findById.mockResolvedValue(mockUser);
+      const req = { user: { userId } };
+
+      const result = await controller.getProfile(req);
+
+      expect(result).toEqual({
+        status: 200,
+        message: 'User successfully retrieved',
+        data: mockUser,
+      });
+      expect(mockUserService.findById).toHaveBeenCalledWith(userId);
+    });
+
+    it('should throw UnauthorizedException if no userId is in request', async () => {
+      const req = { user: {} };
+
+      await expect(controller.getProfile(req)).rejects.toThrow(
+        UnauthorizedException,
+      );
+      expect(mockUserService.findById).not.toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException if user does not exist', async () => {
+      const userId = 'nonExistentUser';
+      mockUserService.findById.mockResolvedValue(null);
+      const req = { user: { userId } };
+
+      await expect(controller.getProfile(req)).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(mockUserService.findById).toHaveBeenCalledWith(userId);
     });
   });
 });
