@@ -1,5 +1,5 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
-import { Model } from 'mongoose';
+import { Model , QueryFilter } from 'mongoose';
 import { Module } from './module.interface';
 import { ModuleDetailDto } from './dtos/module-response.dto';
 import { GetModulesQueryDto } from './dtos/get-modules-query.dto';
@@ -22,7 +22,7 @@ export class ModulesService {
       studycredit,
     } = query;
 
-    const filter: any = {}; // Interface for filter to remove usage of any
+    const filter: QueryFilter<Module> = {};
 
     if (search) {
       const searchRegex = { $regex: search, $options: 'i' };
