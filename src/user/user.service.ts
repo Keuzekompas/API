@@ -3,8 +3,7 @@ import { Model } from 'mongoose';
 import { UserRepository } from './user.repository';
 import { UserDocument } from './user.schema';
 import { UserInterface } from 'src/user/user.interface';
-import { ModuleListDto } from 'src/modules/dtos/module-response.dto';
-import { Module } from 'src/modules/module.interface';
+import { FavoritesResponseDto } from './dtos/favorites-response.dto';
 
 @Injectable()
 export class UserService {
@@ -17,23 +16,15 @@ export class UserService {
     return await this.userRepository.findById(id);
   }
 
-  async getFavorites(
-    id: string,
-    lang: string = 'en',
-  ): Promise<ModuleListDto[] | null> {
+  async getFavorites(id: string): Promise<FavoritesResponseDto | null> {
     const user = await this.userRepository.findWithFavorites(id);
     if (!user) return null;
 
-    const favorites = user.favoriteModules as Module[];
+    const favorites = (user.favoriteModules as any[]).map((module) =>
+      module._id ? module._id.toString() : module.toString(),
+    );
 
-    return favorites.map((module) => ({
-      _id: module._id.toString(),
-      name: lang === 'nl' ? module.name_nl : module.name_en,
-      description:
-        lang === 'nl' ? module.description_nl : module.description_en,
-      studycredit: module.studycredit,
-      location: module.location,
-    }));
+    return { favorites };
   }
 
   async findByEmail(email: string): Promise<UserDocument | null> {
