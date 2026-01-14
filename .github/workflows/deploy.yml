@@ -40,7 +40,7 @@ jobs:
           echo "MAIL_PORT=465" >> .env
           echo "MAIL_PASS=${{ secrets.MAIL_PASS }}" >> .env
           echo "MAIL_USER=keuzekompas@clemens05.nl" >> .env
-          echo "MAIL_FROM=\"KeuzeKompas <keuzekompas@clemens05.nl>\"" >> .env
+          echo 'MAIL_FROM=KeuzeKompas <keuzekompas@clemens05.nl>' >> .env
 
       # STAP 2: Stop oude container
       - name: Stop old container
