@@ -24,7 +24,7 @@ const setTokenCookie = (
   res.cookie('token', token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
   });
 }
 
@@ -52,7 +52,7 @@ export class AuthController {
       res.cookie('temp_token', response.tempToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax', // Needed for 2FA flow
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Needed for 2FA flow
         maxAge: 5 * 60 * 1000, // 5 minutes
       });
 
@@ -102,12 +102,19 @@ export class AuthController {
   @Post('logout')
   @HttpCode(200)
   logout(@Res({ passthrough: true }) res: Response) {
-    res.clearCookie('token', { path: '/' });
-    res.cookie('token', '', { httpOnly: true, maxAge: 0, path: '/' });
+    const cookieOptions = {
+      path: '/',
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' as const : 'lax' as const,
+    };
+
+    res.clearCookie('token', cookieOptions);
+    res.cookie('token', '', { ...cookieOptions, maxAge: 0 });
     
     // Also clear temp token just in case
-    res.clearCookie('temp_token', { path: '/' });
-    res.cookie('temp_token', '', { httpOnly: true, maxAge: 0, path: '/' });
+    res.clearCookie('temp_token', cookieOptions);
+    res.cookie('temp_token', '', { ...cookieOptions, maxAge: 0 });
 
     return createJsonResponse(200, 'Logout successful', null);
   }
