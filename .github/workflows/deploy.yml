@@ -1,0 +1,67 @@
+name: Deploy Backend API
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # STAP 1: Maak .env bestand
+      # Hier combineren we Secrets met server-instellingen
+      - name: Create .env file
+        run: |
+          # --- GEHEIMEN (uit GitHub Secrets) ---
+          echo "MONGODB_URI=${{ secrets.MONGO_URI }}" > .env
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+
+          # --- SERVER INSTELLINGEN ---
+          # We gebruiken poort 5000 (veiliger dan 1000)
+          echo "PORT=5000" >> .env
+          
+          # CORS: Voeg je domeinnaam toe zodat de frontend erbij mag!
+          echo "CORS_ORIGIN=https://keuzekompas.clemens05.nl" >> .env
+
+          # JWT Instellingen
+          echo "JWT_EXPIRES_IN=1h" >> .env
+
+          # Redis (Gebruik het IP van je server)
+          echo "REDIS_HOST=${{ secrets.REDIS_HOST }}" >> .env
+          echo "REDIS_PORT=${{ secrets.REDIS_PORT }}" >> .env
+          echo "REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}" >> .env
+
+          # Mail Instellingen (Strato)
+          echo "MAIL_HOST=${{ secrets.MAIL_HOST }}" >> .env
+          echo "MAIL_PORT=465" >> .env
+          echo "MAIL_PASS=${{ secrets.MAIL_PASS }}" >> .env
+          echo "MAIL_USER=keuzekompas@clemens05.nl" >> .env
+          echo "MAIL_FROM=\"KeuzeKompas Beveiliging <keuzekompas@clemens05.nl>\"" >> .env
+
+      # STAP 2: Stop oude container
+      - name: Stop old container
+        run: docker rm -f backend-api || true
+
+      # STAP 3: Bouw nieuwe image
+      - name: Build Image
+        run: docker build -t backend-api .
+
+      # STAP 4: Start container
+      # Poort 5000 (Server) -> 5000 (Container)
+      - name: Run Container
+        run: |
+          docker run -d \
+            --name backend-api \
+            --network keuzekompas-net \
+            --restart always \
+            --env-file .env \
+            -p 5000:5000 \
+            backend-api
+
+      # STAP 5: Opruimen
+      - name: Cleanup
+        run: docker image prune -f
