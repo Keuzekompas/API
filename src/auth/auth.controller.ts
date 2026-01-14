@@ -18,13 +18,23 @@ import type { Response, Request } from 'express';
 import { LoginThrottlerGuard } from './guards/login-throttler.guard';
 import { Verify2faThrottlerGuard } from './guards/verify-2fa-throttler.guard';
 
+// --- CONFIGURATIE ---
+// Zet hier je hoofddomein met een punt ervoor!
+const COOKIE_DOMAIN = process.env.COOKIE_DOMAIN ?? '.keuzekompas.nl'; 
+
 const setTokenCookie = (
-    res: Response, token: string | undefined
-  ) => {
+  res: Response, token: string | undefined
+) => {
   res.cookie('token', token, {
     httpOnly: true,
+    // Secure moet aan staan op productie (HTTPS)
     secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    // 'Lax' is vaak beter voor subdomeinen dan 'None', maar jouw logica werkt ook.
+    // Belangrijkste is dat ze via HTTPS gaan.
+    sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'lax', 
+    domain: COOKIE_DOMAIN, // <--- HIER ZAT DE FOUT
+    path: '/',
+    maxAge: 24 * 60 * 60 * 1000, // Bijv. 1 dag (pas aan naar wens)
   });
 }
 
@@ -52,7 +62,9 @@ export class AuthController {
       res.cookie('temp_token', response.tempToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Needed for 2FA flow
+        sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'lax',
+        domain: COOKIE_DOMAIN, // <--- OOK HIER TOEVOEGEN
+        path: '/',
         maxAge: 5 * 60 * 1000, // 5 minutes
       });
 
@@ -77,6 +89,8 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
     @Body() verifyDto: Verify2faDto,
   ) {
+    // Let op: als je cookie domain verandert, kan de oude temp_token onleesbaar zijn.
+    // In productie lost zich dit vanzelf op na 5 min.
     const tempToken = req.cookies['temp_token'];
 
     if (!tempToken) {
@@ -88,8 +102,14 @@ export class AuthController {
       verifyDto.code,
     );
 
-    // Clear the temporary token
-    res.clearCookie('temp_token');
+    // Clear the temporary token (Met domain opties!)
+    res.clearCookie('temp_token', { 
+        domain: COOKIE_DOMAIN, 
+        path: '/', 
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'lax'
+    });
 
     // Set the real access token
     setTokenCookie(res, response.token);
@@ -106,10 +126,15 @@ export class AuthController {
       path: '/',
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' as const : 'lax' as const,
+      sameSite: process.env.NODE_ENV === 'production' ? 'lax' as const : 'lax' as const,
+      domain: COOKIE_DOMAIN, // <--- ESSENTIEEL VOOR LOGOUT
     };
 
+    // Je moet de opties meegeven om hem te kunnen verwijderen
     res.clearCookie('token', cookieOptions);
+    
+    // Voor de zekerheid overschrijven we hem ook met empty string + maxAge 0
+    // (Sommige browsers zijn eigenwijs met clearCookie en subdomeinen)
     res.cookie('token', '', { ...cookieOptions, maxAge: 0 });
     
     // Also clear temp token just in case
