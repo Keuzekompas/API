@@ -30,6 +30,9 @@ Maak een bestand genaamd `.env` in de hoofdmap en voeg de volgende configuratie 
 # Database
 MONGODB_URI=mongodb+srv://<user>:<pass>@<cluster>.mongodb.net/?retryWrites=true&w=majority
 
+# Port
+PORT=3000
+
 # Security
 JWT_SECRET=verander_dit_naar_een_veilig_geheim
 
