@@ -19,6 +19,7 @@ jobs:
           # --- GEHEIMEN (uit GitHub Secrets) ---
           echo "MONGODB_URI=${{ secrets.MONGO_URI }}" > .env
           echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+          echo "COOKIE_DOMAIN=${{ secrets.COOKIE_DOMAIN }}" >> .env
 
           # --- SERVER INSTELLINGEN ---
           # We gebruiken poort 5000 (veiliger dan 1000)
