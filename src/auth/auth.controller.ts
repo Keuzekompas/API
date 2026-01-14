@@ -75,7 +75,7 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
     @Body() verifyDto: Verify2faDto,
   ) {
-    const tempToken = req.cookies['temp_token'];
+    const tempToken = req.cookies?.['temp_token'];
 
     if (!tempToken) {
       throw new UnauthorizedException('Session expired or invalid');
