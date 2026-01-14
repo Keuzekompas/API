@@ -17,7 +17,7 @@ export class IpThrottlerGuard extends BaseThrottlerGuard {
     const { throttler } = requestProps;
 
     // If the current check is NOT for the 'default' throttler, ignore it in this guard
-    if (throttler.name !== 'default') {
+    if (throttler.name !== 'short' && throttler.name !== 'long') {
       return true;
     }
 
