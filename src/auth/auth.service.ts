@@ -93,9 +93,14 @@ export class AuthService {
     // Code is valid, remove it
     await redisInstance.del(`2fa:${userId}`);
 
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
     // Issue full token
-    const token = this.jwtService.sign({ userId });
-    
+    const token = this.jwtService.sign({ userId, name: user.name });
+
     return {
       user: { id: userId },
       token,
