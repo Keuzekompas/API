@@ -18,22 +18,20 @@ import type { Response, Request } from 'express';
 import { LoginThrottlerGuard } from './guards/login-throttler.guard';
 import { Verify2faThrottlerGuard } from './guards/verify-2fa-throttler.guard';
 
-const setTokenCookie = (
-    res: Response, token: string | undefined
-  ) => {
+const setTokenCookie = (res: Response, token: string | undefined) => {
   res.cookie('token', token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
   });
-}
+};
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @UseGuards(LoginThrottlerGuard)
-  @SkipThrottle({ default: true })
+  @SkipThrottle({ short: true, long: true })
   @Post('/login')
   @HttpCode(200)
   async login(
@@ -69,7 +67,7 @@ export class AuthController {
   }
 
   @UseGuards(Verify2faThrottlerGuard)
-  @SkipThrottle({ default: true })
+  @SkipThrottle({ short: true, long: true })
   @Post('/verify-2fa')
   @HttpCode(200)
   async verify2FA(
@@ -80,7 +78,7 @@ export class AuthController {
     const tempToken = req.cookies['temp_token'];
 
     if (!tempToken) {
-        throw new UnauthorizedException('Session expired or invalid');
+      throw new UnauthorizedException('Session expired or invalid');
     }
 
     const response = await this.authService.verifyTwoFactor(
@@ -104,7 +102,7 @@ export class AuthController {
   logout(@Res({ passthrough: true }) res: Response) {
     res.clearCookie('token', { path: '/' });
     res.cookie('token', '', { httpOnly: true, maxAge: 0, path: '/' });
-    
+
     // Also clear temp token just in case
     res.clearCookie('temp_token', { path: '/' });
     res.cookie('temp_token', '', { httpOnly: true, maxAge: 0, path: '/' });

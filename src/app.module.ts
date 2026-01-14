@@ -19,7 +19,8 @@ import { redisInstance } from './utils/redis';
     ModulesModule,
     ThrottlerModule.forRoot({
       throttlers: [
-        { name: 'default', ttl: 60000, limit: 60 }, // Global limit
+        { name: 'short', ttl: 10000, limit: 20 }, // Global Burst: 20 per 10s
+        { name: 'long', ttl: 900000, limit: 500 }, // Global Anti-Scrape: 500 per 15m
         { name: 'loginAttempts', ttl: 60000, limit: 5 }, // login limit
         { name: 'verify2fa', ttl: 60000, limit: 5 }, // 2FA verification limit
       ],
@@ -30,7 +31,7 @@ import { redisInstance } from './utils/redis';
   providers: [
     {
       provide: APP_GUARD,
-      useClass: IpThrottlerGuard, 
+      useClass: IpThrottlerGuard,
     },
     AppService,
     ...databaseProviders,
