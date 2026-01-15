@@ -14,13 +14,10 @@ describe('AppController (e2e)', () => {
       .overrideProvider('DATABASE_CONNECTION')
       .useValue({
         model: jest.fn(() => ({
-          findOne: jest.fn(() => ({
-            select: jest.fn(() => ({
-              lean: jest.fn(() => ({
-                exec: jest.fn(),
-              })),
-            })),
-          })),
+          findOne: jest.fn().mockReturnThis(),
+          select: jest.fn().mockReturnThis(),
+          lean: jest.fn().mockReturnThis(),
+          exec: jest.fn(),
         })),
       })
       .compile();
