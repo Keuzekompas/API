@@ -5,15 +5,47 @@ on:
     branches: [ "main" ]
 
 jobs:
-  deploy:
-    runs-on: self-hosted
+  # --- JOB 1: TESTEN (Continuous Integration) ---
+  test:
+    name: Run Unit Tests
+    runs-on: ubuntu-latest # Draai dit lekker in de cloud, scheelt je server CPU
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Of de versie die jij gebruikt (18/20/22)
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci # 'ci' is sneller en strikter dan 'install' voor pipelines
+
+      # Optioneel: Maak een dummy .env als je tests crashen zonder secrets
+      - name: Create dummy .env for tests
+        run: |
+          echo "JWT_SECRET=testsecret" > .env
+          echo "COOKIE_DOMAIN=localhost" >> .env
+          # Voeg andere vars toe als je unit tests daarom vragen
+
+      - name: Run Unit Tests
+        run: npm run test
+        # Wil je ook e2e tests? Gebruik dan: npm run test:e2e
+        # Let op: Voor e2e heb je vaak een tijdelijke MongoDB container nodig in deze job.
+
+  # --- JOB 2: DEPLOYEN (Continuous Deployment) ---
+  deploy:
+    name: Deploy to Home Server
+    needs: test # <--- CRUCIAAL: Wacht tot 'test' geslaagd is!
+    runs-on: self-hosted
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       # STAP 1: Maak .env bestand
-      # Hier combineren we Secrets met server-instellingen
       - name: Create .env file
         run: |
           # --- GEHEIMEN (uit GitHub Secrets) ---
@@ -22,21 +54,16 @@ jobs:
           echo "COOKIE_DOMAIN=${{ secrets.COOKIE_DOMAIN }}" >> .env
 
           # --- SERVER INSTELLINGEN ---
-          # We gebruiken poort 5000 (veiliger dan 1000)
           echo "PORT=5000" >> .env
-          
-          # CORS: Voeg je domeinnaam toe zodat de frontend erbij mag!
           echo "CORS_ORIGIN=https://keuzekompas.clemens05.nl" >> .env
-
-          # JWT Instellingen
           echo "JWT_EXPIRES_IN=1h" >> .env
 
-          # Redis (Gebruik het IP van je server)
+          # Redis
           echo "REDIS_HOST=${{ secrets.REDIS_HOST }}" >> .env
           echo "REDIS_PORT=${{ secrets.REDIS_PORT }}" >> .env
           echo "REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}" >> .env
 
-          # Mail Instellingen (Strato)
+          # Mail Instellingen
           echo "MAIL_HOST=${{ secrets.MAIL_HOST }}" >> .env
           echo "MAIL_PORT=465" >> .env
           echo "MAIL_PASS=${{ secrets.MAIL_PASS }}" >> .env
@@ -52,7 +79,6 @@ jobs:
         run: docker build -t backend-api .
 
       # STAP 4: Start container
-      # Poort 5000 (Server) -> 5000 (Container)
       - name: Run Container
         run: |
           docker run -d \
