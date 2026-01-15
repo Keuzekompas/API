@@ -74,26 +74,19 @@ describe('UserService', () => {
 
       const result = await service.getFavorites(userId);
 
-      expect(result).toEqual([
-        {
-          _id: 'mod1',
-          name: 'English Name',
-          description: 'English Desc',
-          studycredit: 5,
-          location: 'Breda',
-        },
-      ]);
+      expect(result).toEqual({
+        favorites: ['mod1'],
+      });
     });
 
-    it('should map favorites to Dutch when lang is "nl"', async () => {
+    it('should return just the ID when lang is "nl"', async () => {
       mockUserRepository.findWithFavorites.mockResolvedValue({
         favoriteModules: mockRawModules,
       });
 
-      const result = await service.getFavorites(userId, 'nl');
+      const result = await service.getFavorites(userId);
 
-      expect(result?.[0].name).toBe('Nederlandse Naam');
-      expect(result?.[0].description).toBe('Nederlandse Desc');
+      expect(result?.favorites[0]).toBe('mod1');
     });
 
     it('should return null if user is not found', async () => {

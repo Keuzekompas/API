@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import * as MongoSanitize from 'express-mongo-sanitize';
 import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
 import { ApiExceptionFilter } from './utils/api-exception.filter';
 import { ValidationPipe } from '@nestjs/common';
 import { SanitizeOutputInterceptor } from './utils/sanitize-output.interceptor';
@@ -13,6 +14,7 @@ async function bootstrap() {
   const expressApp = app.getHttpAdapter().getInstance();
   expressApp.set('trust proxy', 1);
 
+  app.use(helmet());
   app.use(cookieParser());
 
   // NoSQL Sanitize

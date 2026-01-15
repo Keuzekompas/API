@@ -18,9 +18,9 @@ import type { Response, Request } from 'express';
 import { LoginThrottlerGuard } from './guards/login-throttler.guard';
 import { Verify2faThrottlerGuard } from './guards/verify-2fa-throttler.guard';
 
-// --- CONFIGURATIE ---
-// Zet hier je hoofddomein met een punt ervoor!
-const COOKIE_DOMAIN = process.env.COOKIE_DOMAIN ?? '.keuzekompas.nl'; 
+const COOKIE_DOMAIN = process.env.NODE_ENV === 'production' 
+  ? (process.env.COOKIE_DOMAIN ?? '.keuzekompas.nl')
+  : undefined;
 
 const setTokenCookie = (
   res: Response, token: string | undefined
@@ -29,21 +29,19 @@ const setTokenCookie = (
     httpOnly: true,
     // Secure moet aan staan op productie (HTTPS)
     secure: process.env.NODE_ENV === 'production',
-    // 'Lax' is vaak beter voor subdomeinen dan 'None', maar jouw logica werkt ook.
-    // Belangrijkste is dat ze via HTTPS gaan.
     sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'lax', 
-    domain: COOKIE_DOMAIN, // <--- HIER ZAT DE FOUT
+    domain: COOKIE_DOMAIN, 
     path: '/',
-    maxAge: 24 * 60 * 60 * 1000, // Bijv. 1 dag (pas aan naar wens)
+    maxAge: 24 * 60 * 60 * 1000,
   });
-}
+};
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @UseGuards(LoginThrottlerGuard)
-  @SkipThrottle({ default: true })
+  @SkipThrottle({ short: true, long: true })
   @Post('/login')
   @HttpCode(200)
   async login(
@@ -63,14 +61,15 @@ export class AuthController {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'lax',
-        domain: COOKIE_DOMAIN, // <--- OOK HIER TOEVOEGEN
+        domain: COOKIE_DOMAIN, 
         path: '/',
         maxAge: 5 * 60 * 1000, // 5 minutes
       });
 
       // Remove sensitive data from response body
       const { tempToken, ...safeResponse } = response;
-      return createJsonResponse(200, '2FA required', safeResponse);
+      // Return tempToken in body as well for clients that don't support cookies well
+      return createJsonResponse(200, '2FA required', { ...safeResponse, tempToken });
     }
 
     setTokenCookie(res, response.token);
@@ -81,7 +80,7 @@ export class AuthController {
   }
 
   @UseGuards(Verify2faThrottlerGuard)
-  @SkipThrottle({ default: true })
+  @SkipThrottle({ short: true, long: true })
   @Post('/verify-2fa')
   @HttpCode(200)
   async verify2FA(
@@ -89,12 +88,10 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
     @Body() verifyDto: Verify2faDto,
   ) {
-    // Let op: als je cookie domain verandert, kan de oude temp_token onleesbaar zijn.
-    // In productie lost zich dit vanzelf op na 5 min.
-    const tempToken = req.cookies['temp_token'];
+    const tempToken = req.cookies?.['temp_token'];
 
     if (!tempToken) {
-        throw new UnauthorizedException('Session expired or invalid');
+      throw new UnauthorizedException('Session expired or invalid');
     }
 
     const response = await this.authService.verifyTwoFactor(
