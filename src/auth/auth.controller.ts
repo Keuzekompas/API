@@ -18,9 +18,6 @@ import type { Response, Request } from 'express';
 import { LoginThrottlerGuard } from './guards/login-throttler.guard';
 import { Verify2faThrottlerGuard } from './guards/verify-2fa-throttler.guard';
 
-// --- CONFIGURATIE ---
-// Zet hier je hoofddomein met een punt ervoor!
-// Voor localhost development: gebruik undefined zodat het op localhost werkt
 const COOKIE_DOMAIN = process.env.NODE_ENV === 'production' 
   ? (process.env.COOKIE_DOMAIN ?? '.keuzekompas.nl')
   : undefined;
@@ -34,7 +31,7 @@ const setTokenCookie = (
     sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'lax', 
     domain: COOKIE_DOMAIN, 
     path: '/',
-    maxAge: 24 * 60 * 60 * 1000, // Bijv. 1 dag (pas a
+    maxAge: 24 * 60 * 60 * 1000,
   });
 };
 
@@ -90,9 +87,6 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
     @Body() verifyDto: Verify2faDto,
   ) {
-    // Let op: als je cookie domain verandert, kan de oude temp_token onleesbaar zijn.
-    // In productie lost zich dit vanzelf op na 5 min.
-    // Fallback: check body if cookie is missing
     const tempToken = req.cookies['temp_token'] ?? verifyDto.tempToken;
 
     if (!tempToken) {
