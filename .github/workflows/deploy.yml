@@ -14,7 +14,7 @@ jobs:
     # GitHub start deze op voordat je stappen beginnen.
     # Ze zijn bereikbaar via 'localhost' op de opgegeven poorten.
     services:
-    mongo:
+      mongo:
         image: mongo:6 # Gebruik dezelfde versie als je productie (ongeveer)
         ports:
           - 27017:27017
@@ -23,7 +23,7 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-          
+
       redis:
         image: redis:alpine
         ports:
@@ -50,8 +50,10 @@ jobs:
       # Maak een .env die verbindt met de SERVICE containers hierboven
       - name: Create .env for tests
         run: |
+          # MongoDB (draait nu lokaal in de GitHub Service)
           echo "MONGODB_URI=mongodb://localhost:27017/test_db" > .env
           
+          # Redis (draait ook lokaal in de Service)
           echo "REDIS_HOST=localhost" >> .env
           echo "REDIS_PORT=6379" >> .env
           
