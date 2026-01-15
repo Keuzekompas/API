@@ -3,10 +3,10 @@ import { Module } from '@nestjs/common';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
 import { UserRepository } from './user.repository';
-import { DatabaseModule } from 'src/database/database.module';
+import { DatabaseModule } from '../database/database.module';
 import { userProviders } from './user.providers';
-import { AuthGuard } from 'src/auth/guards/auth.guard';
-import { AuthModule } from 'src/auth/auth.module';
+import { AuthGuard } from '../auth/guards/auth.guard';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [DatabaseModule, AuthModule],
