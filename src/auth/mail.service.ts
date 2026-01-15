@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
-import { redisInstance } from 'src/utils/redis';
+import { redisInstance } from '../utils/redis';
 
 @Injectable()
 export class MailService {
