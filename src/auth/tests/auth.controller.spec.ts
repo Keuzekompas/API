@@ -8,7 +8,7 @@ import { UnauthorizedException } from '@nestjs/common';
 
 describe('AuthController', () => {
   let controller: AuthController;
-  let mockResponse: Partial<Response>;
+  let mockResponse: Response;
   let mockAuthService: any;
 
   beforeEach(async () => {
@@ -17,11 +17,12 @@ describe('AuthController', () => {
       verifyTwoFactor: jest.fn(),
     };
 
-    // Belangrijk: reset de mock functies voor elke test
     mockResponse = {
       cookie: jest.fn().mockReturnThis(),
       clearCookie: jest.fn().mockReturnThis(),
-    };
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn().mockReturnThis(),
+    } as unknown as Response;
 
     const mockGuard = { canActivate: jest.fn(() => true) };
 
@@ -44,11 +45,7 @@ describe('AuthController', () => {
       const loginResult = { requires2FA: true, tempToken: 'temp-token' };
       mockAuthService.login.mockResolvedValue(loginResult);
 
-      const result = await controller.login(
-        mockResponse as Response,
-        authDto,
-        '127.0.0.1',
-      );
+      const result = await controller.login(mockResponse, authDto, '127.0.0.1');
 
       expect(mockResponse.cookie).toHaveBeenCalledWith(
         'temp_token',
@@ -67,11 +64,7 @@ describe('AuthController', () => {
       };
       mockAuthService.login.mockResolvedValue(loginResult);
 
-      const result = await controller.login(
-        mockResponse as Response,
-        authDto,
-        '127.0.0.1',
-      );
+      const result = await controller.login(mockResponse, authDto, '127.0.0.1');
 
       expect(mockResponse.cookie).toHaveBeenCalledWith(
         'token',
@@ -94,7 +87,7 @@ describe('AuthController', () => {
 
       const result = await controller.verify2FA(
         mockRequest,
-        mockResponse as Response,
+        mockResponse,
         verifyDto,
       );
 
@@ -111,7 +104,7 @@ describe('AuthController', () => {
       const mockRequest = { cookies: {} } as unknown as Request;
 
       await expect(
-        controller.verify2FA(mockRequest, mockResponse as Response, {
+        controller.verify2FA(mockRequest, mockResponse, {
           code: '123',
         }),
       ).rejects.toThrow(UnauthorizedException);
@@ -120,7 +113,7 @@ describe('AuthController', () => {
 
   describe('logout', () => {
     it('should clear all cookies and return success', () => {
-      const result = controller.logout(mockResponse as Response);
+      const result = controller.logout(mockResponse);
 
       const expectedOptions = expect.objectContaining({ path: '/' });
 
