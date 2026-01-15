@@ -94,7 +94,15 @@ describe('AuthController', () => {
     it('should clear the authentication cookie', () => {
       controller.logout(mockResponse);
 
-      expect(mockResponse.clearCookie).toHaveBeenCalledWith('token', { path: '/' });
+      const cookieOptions = {
+        path: '/',
+        httpOnly: true,
+        secure: false, // Default for non-prod
+        sameSite: 'lax',
+      };
+
+      expect(mockResponse.clearCookie).toHaveBeenCalledWith('token', cookieOptions);
+      expect(mockResponse.clearCookie).toHaveBeenCalledWith('temp_token', cookieOptions);
     });
   });
 

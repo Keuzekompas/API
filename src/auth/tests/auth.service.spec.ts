@@ -119,6 +119,8 @@ describe('AuthService', () => {
       (redisInstance.get as jest.Mock).mockResolvedValue(code);
       (redisInstance.del as jest.Mock).mockResolvedValue(1);
 
+      mockUserRepository.findById.mockResolvedValue(mockUser);
+
       // Act
       const result = await service.verifyTwoFactor(tempToken, code);
 
