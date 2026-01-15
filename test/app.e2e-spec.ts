@@ -10,7 +10,17 @@ describe('AppController (e2e)', () => {
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideProvider('DATABASE_CONNECTION')
+      .useValue({
+        model: jest.fn(() => ({
+          findOne: jest.fn().mockReturnThis(),
+          select: jest.fn().mockReturnThis(),
+          lean: jest.fn().mockReturnThis(),
+          exec: jest.fn(),
+        })),
+      })
+      .compile();
 
     app = moduleFixture.createNestApplication();
     app.use(helmet());
