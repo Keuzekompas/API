@@ -27,6 +27,7 @@ const setTokenCookie = (
 ) => {
   res.cookie('token', token, {
     httpOnly: true,
+    // Secure moet aan staan op productie (HTTPS)
     secure: process.env.NODE_ENV === 'production',
     sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'lax', 
     domain: COOKIE_DOMAIN, 
@@ -98,8 +99,14 @@ export class AuthController {
       verifyDto.code,
     );
 
-    // Clear the temporary token
-    res.clearCookie('temp_token');
+    // Clear the temporary token (Met domain opties!)
+    res.clearCookie('temp_token', { 
+        domain: COOKIE_DOMAIN, 
+        path: '/', 
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'lax'
+    });
 
     // Set the real access token
     setTokenCookie(res, response.token);
@@ -116,10 +123,15 @@ export class AuthController {
       path: '/',
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' as const : 'lax' as const,
+      sameSite: process.env.NODE_ENV === 'production' ? 'lax' as const : 'lax' as const,
+      domain: COOKIE_DOMAIN, // <--- ESSENTIEEL VOOR LOGOUT
     };
 
+    // Je moet de opties meegeven om hem te kunnen verwijderen
     res.clearCookie('token', cookieOptions);
+    
+    // Voor de zekerheid overschrijven we hem ook met empty string + maxAge 0
+    // (Sommige browsers zijn eigenwijs met clearCookie en subdomeinen)
     res.cookie('token', '', { ...cookieOptions, maxAge: 0 });
     
     // Also clear temp token just in case
