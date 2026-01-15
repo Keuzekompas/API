@@ -91,7 +91,10 @@ describe('AuthController', () => {
         verifyDto,
       );
 
-      expect(mockResponse.clearCookie).toHaveBeenCalledWith('temp_token');
+      expect(mockResponse.clearCookie).toHaveBeenCalledWith(
+        'temp_token',
+        expect.any(Object),
+      );
       expect(mockResponse.cookie).toHaveBeenCalledWith(
         'token',
         'auth-token',
