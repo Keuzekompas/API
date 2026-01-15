@@ -44,7 +44,6 @@ describe('ModulesService', () => {
     }).compile();
 
     service = module.get<ModulesService>(ModulesService);
-    model = module.get<Model<Module>>('MODULE_MODEL');
     jest.clearAllMocks();
   });
 
@@ -68,13 +67,15 @@ describe('ModulesService', () => {
       const modules = await service.findAll(query);
 
       const expected = {
-        modules: [{
-          _id: mockModule._id,
-          name: mockModule.name_en,
-          description: mockModule.description_en,
-          studycredit: mockModule.studycredit,
-          location: mockModule.location,
-        }],
+        modules: [
+          {
+            _id: mockModule._id,
+            name: mockModule.name_en,
+            description: mockModule.description_en,
+            studycredit: mockModule.studycredit,
+            location: mockModule.location,
+          },
+        ],
         total: 1,
         page: 1,
         limit: 10,
@@ -124,7 +125,7 @@ describe('ModulesService', () => {
       });
 
       const foundModule = await service.findOne('507f1f77bcf86cd799439011');
-      
+
       const expected = {
         _id: mockModule._id,
         name: mockModule.name_en,
