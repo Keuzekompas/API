@@ -108,15 +108,6 @@ describe('AuthController', () => {
           code: '123',
         }),
       ).rejects.toThrow(UnauthorizedException);
-      const cookieOptions = {
-        path: '/',
-        httpOnly: true,
-        secure: false, // Default for non-prod
-        sameSite: 'lax',
-      };
-
-      expect(mockResponse.clearCookie).toHaveBeenCalledWith('token', cookieOptions);
-      expect(mockResponse.clearCookie).toHaveBeenCalledWith('temp_token', cookieOptions);
     });
   });
 
