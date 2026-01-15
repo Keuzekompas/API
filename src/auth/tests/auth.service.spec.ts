@@ -21,7 +21,9 @@ jest.mock('../../utils/redis', () => ({
 
 jest.mock('../../utils/penalty', () => ({
   PenaltyManager: {
-    getBlockData: jest.fn().mockResolvedValue({ isBlocked: false, timeLeft: 0 }),
+    getBlockData: jest
+      .fn()
+      .mockResolvedValue({ isBlocked: false, timeLeft: 0 }),
     applyPenalty: jest.fn(),
     resetPenalty: jest.fn(),
   },
@@ -80,12 +82,18 @@ describe('AuthService', () => {
       (redisInstance.setex as jest.Mock).mockResolvedValue('OK');
 
       // Act
-      const result = await service.login('test@student.avans.nl', 'password', '127.0.0.1');
+      const result = await service.login(
+        'test@student.avans.nl',
+        'password',
+        '127.0.0.1',
+      );
 
       // Assert
       expect(result).toHaveProperty('requires2FA', true);
       expect(result).toHaveProperty('tempToken');
-      expect(userRepository.findByEmail).toHaveBeenCalledWith('test@student.avans.nl');
+      expect(userRepository.findByEmail).toHaveBeenCalledWith(
+        'test@student.avans.nl',
+      );
       expect(mockMailService.sendTwoFactorCode).toHaveBeenCalled();
       expect(redisInstance.setex).toHaveBeenCalled();
     });
@@ -93,18 +101,18 @@ describe('AuthService', () => {
     it('should throw UnauthorizedException if user not found', async () => {
       mockUserRepository.findByEmail.mockResolvedValue(null);
 
-      await expect(service.login('wrong@email.com', 'password', '127.0.0.1')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        service.login('wrong@email.com', 'password', '127.0.0.1'),
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it('should throw UnauthorizedException if password does not match', async () => {
       mockUserRepository.findByEmail.mockResolvedValue(mockUser);
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
-      await expect(service.login('test@student.avans.nl', 'wrongPass', '127.0.0.1')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        service.login('test@student.avans.nl', 'wrongPass', '127.0.0.1'),
+      ).rejects.toThrow(UnauthorizedException);
     });
   });
 
@@ -119,13 +127,17 @@ describe('AuthService', () => {
       (redisInstance.get as jest.Mock).mockResolvedValue(code);
       (redisInstance.del as jest.Mock).mockResolvedValue(1);
 
+      mockUserRepository.findById.mockResolvedValue(mockUser);
+
       // Act
       const result = await service.verifyTwoFactor(tempToken, code);
 
       // Assert
       expect(result).toHaveProperty('token');
       expect(result.user).toHaveProperty('id', userId);
-      
+
+      expect(userRepository.findById).toHaveBeenCalledWith(userId);
+
       // Check session length
       const decoded: any = jwtService.decode(result.token!);
       expect(decoded).toHaveProperty('exp');
@@ -138,9 +150,9 @@ describe('AuthService', () => {
       const tempToken = jwtService.sign({ userId, isTemp: true });
       (redisInstance.get as jest.Mock).mockResolvedValue('123456');
 
-      await expect(service.verifyTwoFactor(tempToken, '000000')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        service.verifyTwoFactor(tempToken, '000000'),
+      ).rejects.toThrow(UnauthorizedException);
     });
   });
 });
