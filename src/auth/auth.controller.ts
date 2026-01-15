@@ -18,11 +18,23 @@ import type { Response, Request } from 'express';
 import { LoginThrottlerGuard } from './guards/login-throttler.guard';
 import { Verify2faThrottlerGuard } from './guards/verify-2fa-throttler.guard';
 
-const setTokenCookie = (res: Response, token: string | undefined) => {
+// --- CONFIGURATIE ---
+// Zet hier je hoofddomein met een punt ervoor!
+// Voor localhost development: gebruik undefined zodat het op localhost werkt
+const COOKIE_DOMAIN = process.env.NODE_ENV === 'production' 
+  ? (process.env.COOKIE_DOMAIN ?? '.keuzekompas.nl')
+  : undefined;
+
+const setTokenCookie = (
+  res: Response, token: string | undefined
+) => {
   res.cookie('token', token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'lax', 
+    domain: COOKIE_DOMAIN, 
+    path: '/',
+    maxAge: 24 * 60 * 60 * 1000, // Bijv. 1 dag (pas a
   });
 };
 
@@ -50,13 +62,16 @@ export class AuthController {
       res.cookie('temp_token', response.tempToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Needed for 2FA flow
+        sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'lax',
+        domain: COOKIE_DOMAIN, 
+        path: '/',
         maxAge: 5 * 60 * 1000, // 5 minutes
       });
 
       // Remove sensitive data from response body
       const { tempToken, ...safeResponse } = response;
-      return createJsonResponse(200, '2FA required', safeResponse);
+      // Return tempToken in body as well for clients that don't support cookies well
+      return createJsonResponse(200, '2FA required', { ...safeResponse, tempToken });
     }
 
     setTokenCookie(res, response.token);
@@ -75,7 +90,10 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
     @Body() verifyDto: Verify2faDto,
   ) {
-    const tempToken = req.cookies['temp_token'];
+    // Let op: als je cookie domain verandert, kan de oude temp_token onleesbaar zijn.
+    // In productie lost zich dit vanzelf op na 5 min.
+    // Fallback: check body if cookie is missing
+    const tempToken = req.cookies['temp_token'] ?? verifyDto.tempToken;
 
     if (!tempToken) {
       throw new UnauthorizedException('Session expired or invalid');
