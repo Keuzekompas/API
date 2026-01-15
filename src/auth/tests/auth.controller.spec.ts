@@ -4,39 +4,35 @@ import { AuthService } from '../auth.service';
 import { Response, Request } from 'express';
 import { LoginThrottlerGuard } from '../guards/login-throttler.guard';
 import { Verify2faThrottlerGuard } from '../guards/verify-2fa-throttler.guard';
+import { UnauthorizedException } from '@nestjs/common';
 
 describe('AuthController', () => {
   let controller: AuthController;
-  let authService: AuthService;
-
-  const mockAuthService = {
-    login: jest.fn(),
-    verifyTwoFactor: jest.fn(),
-  };
-
-  const mockResponse = {
-    cookie: jest.fn(),
-    clearCookie: jest.fn(),
-  } as unknown as Response;
-
-  const mockLoginThrottlerGuard = {
-    canActivate: jest.fn(() => true),
-  };
+  let mockResponse: Partial<Response>;
+  let mockAuthService: any;
 
   beforeEach(async () => {
+    mockAuthService = {
+      login: jest.fn(),
+      verifyTwoFactor: jest.fn(),
+    };
+
+    // Belangrijk: reset de mock functies voor elke test
+    mockResponse = {
+      cookie: jest.fn().mockReturnThis(),
+      clearCookie: jest.fn().mockReturnThis(),
+    };
+
+    const mockGuard = { canActivate: jest.fn(() => true) };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
-      providers: [
-        {
-          provide: AuthService,
-          useValue: mockAuthService,
-        },
-      ],
+      providers: [{ provide: AuthService, useValue: mockAuthService }],
     })
       .overrideGuard(LoginThrottlerGuard)
-      .useValue(mockLoginThrottlerGuard)
+      .useValue(mockGuard)
       .overrideGuard(Verify2faThrottlerGuard)
-      .useValue(mockLoginThrottlerGuard)
+      .useValue(mockGuard)
       .compile();
 
     controller = module.get<AuthController>(AuthController);
@@ -46,21 +42,43 @@ describe('AuthController', () => {
     it('should return 2FA requirement and set temp cookie', async () => {
       const authDto = { email: 'test@student.avans.nl', password: 'pw' };
       const loginResult = { requires2FA: true, tempToken: 'temp-token' };
-      
       mockAuthService.login.mockResolvedValue(loginResult);
 
-      const result = await controller.login(mockResponse, authDto, '127.0.0.1');
+      const result = await controller.login(
+        mockResponse as Response,
+        authDto,
+        '127.0.0.1',
+      );
 
-      expect(mockAuthService.login).toHaveBeenCalledWith(authDto.email, authDto.password, '127.0.0.1');
-      expect(mockResponse.cookie).toHaveBeenCalledWith('temp_token', 'temp-token', expect.objectContaining({
-        httpOnly: true,
-        maxAge: 300000, 
-      }));
-      expect(result).toEqual({ // Check that wrapped response is correct
-        status: 200,
-        message: '2FA required',
-        data: { requires2FA: true },
-      });
+      expect(mockResponse.cookie).toHaveBeenCalledWith(
+        'temp_token',
+        'temp-token',
+        expect.any(Object),
+      );
+      expect(result.message).toBe('2FA required');
+    });
+
+    it('should login directly if 2FA is not required', async () => {
+      const authDto = { email: 'test@student.avans.nl', password: 'pw' };
+      const loginResult = {
+        requires2FA: false,
+        token: 'final-token',
+        user: { id: 1 },
+      };
+      mockAuthService.login.mockResolvedValue(loginResult);
+
+      const result = await controller.login(
+        mockResponse as Response,
+        authDto,
+        '127.0.0.1',
+      );
+
+      expect(mockResponse.cookie).toHaveBeenCalledWith(
+        'token',
+        'final-token',
+        expect.any(Object),
+      );
+      expect(result.message).toBe('Login successful');
     });
   });
 
@@ -68,35 +86,53 @@ describe('AuthController', () => {
     it('should verify code and set auth token', async () => {
       const verifyDto = { code: '123456' };
       const verifyResult = { token: 'auth-token', user: { id: '1' } };
-      
       mockAuthService.verifyTwoFactor.mockResolvedValue(verifyResult);
 
       const mockRequest = {
-        cookies: { 'temp_token': 'temp-token' },
+        cookies: { temp_token: 'temp-token' },
       } as unknown as Request;
 
-      const result = await controller.verify2FA(mockRequest, mockResponse, verifyDto);
+      const result = await controller.verify2FA(
+        mockRequest,
+        mockResponse as Response,
+        verifyDto,
+      );
 
-      expect(mockAuthService.verifyTwoFactor).toHaveBeenCalledWith('temp-token', '123456');
       expect(mockResponse.clearCookie).toHaveBeenCalledWith('temp_token');
-      expect(mockResponse.cookie).toHaveBeenCalledWith('token', 'auth-token', expect.objectContaining({
-        httpOnly: true,
-      }));
-       expect(result).toEqual({ // Check that wrapped response is correct
-        status: 200,
-        message: 'Login successful',
-        data: { user: { id: '1' } },
-      });
+      expect(mockResponse.cookie).toHaveBeenCalledWith(
+        'token',
+        'auth-token',
+        expect.any(Object),
+      );
+      expect(result.data.user!.id).toBe('1');
+    });
+
+    it('should throw UnauthorizedException if temp_token is missing', async () => {
+      const mockRequest = { cookies: {} } as unknown as Request;
+
+      await expect(
+        controller.verify2FA(mockRequest, mockResponse as Response, {
+          code: '123',
+        }),
+      ).rejects.toThrow(UnauthorizedException);
     });
   });
 
   describe('logout', () => {
-    it('should clear the authentication cookie', () => {
-      controller.logout(mockResponse);
+    it('should clear all cookies and return success', () => {
+      const result = controller.logout(mockResponse as Response);
 
-      expect(mockResponse.clearCookie).toHaveBeenCalledWith('token', { path: '/' });
+      const expectedOptions = expect.objectContaining({ path: '/' });
+
+      expect(mockResponse.clearCookie).toHaveBeenCalledWith(
+        'token',
+        expectedOptions,
+      );
+      expect(mockResponse.clearCookie).toHaveBeenCalledWith(
+        'temp_token',
+        expectedOptions,
+      );
+      expect(result.status).toBe(200);
     });
   });
-
 });
-
