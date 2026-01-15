@@ -44,6 +44,16 @@ describe('AuthGuard', () => {
     );
   });
 
+  it('should throw UnauthorizedException if token is a temporary 2FA token', async () => {
+    const context = mockContext({ token: 'temp.token' });
+    const payload = { userId: '123', isTemp: true };
+    (jwtService.verifyAsync as jest.Mock).mockResolvedValue(payload);
+
+    await expect(authGuard.canActivate(context)).rejects.toThrow(
+      new UnauthorizedException('Full authentication required'),
+    );
+  });
+
   it('should throw UnauthorizedException if token is expired (Session Expiration)', async () => {
     const context = mockContext({ token: 'expired.token' });
     (jwtService.verifyAsync as jest.Mock).mockRejectedValue(

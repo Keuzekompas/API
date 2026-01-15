@@ -132,7 +132,7 @@ describe('ModulesService', () => {
         studycredit: mockModule.studycredit,
         location: mockModule.location,
         level: mockModule.level,
-        start_date: mockModule.start_date,
+        start_date: mockModule.start_date.toISOString(),
         module_tags: mockModule.module_tags_en,
       };
 
