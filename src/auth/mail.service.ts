@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
+import { redisInstance } from 'src/utils/redis';
 
 @Injectable()
 export class MailService {
@@ -18,7 +19,18 @@ export class MailService {
   }
 
   async sendTwoFactorCode(email: string, code: string) {
-    if (!process.env.MAIL_HOST || process.env.MAIL_HOST === 'smtp.example.com') {
+    const cooldownKey = `mail_cooldown:${email}`;
+
+    const result = await redisInstance.set(cooldownKey, 'true', 'EX', 10, 'NX');
+
+    if (result !== 'OK') {
+      return;
+    }
+
+    if (
+      !process.env.MAIL_HOST ||
+      process.env.MAIL_HOST === 'smtp.example.com'
+    ) {
       console.log(`[Mock Mail] To: ${email}, Code: ${code}`);
       return;
     }
@@ -125,12 +137,17 @@ export class MailService {
       </html>
     `;
 
-    await this.transporter.sendMail({
-      from: process.env.MAIL_FROM,
-      to: email,
-      subject: 'KeuzeKompas Verification Code',
-      text: `Your verification code is: ${code}`,
-      html: htmlContent,
-    });
+    try {
+      await this.transporter.sendMail({
+        from: process.env.MAIL_FROM,
+        to: email,
+        subject: 'KeuzeKompas Verification Code',
+        text: `Your verification code is: ${code}`,
+        html: htmlContent,
+      });
+    } catch (error) {
+      await redisInstance.del(cooldownKey);
+      throw error;
+    }
   }
 }
