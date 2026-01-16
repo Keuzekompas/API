@@ -87,6 +87,7 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
     @Body() verifyDto: Verify2faDto,
+    @Ip() ip: string,
   ) {
     const tempToken = req.cookies?.['temp_token'];
 
@@ -97,6 +98,7 @@ export class AuthController {
     const response = await this.authService.verifyTwoFactor(
       tempToken,
       verifyDto.code,
+      ip,
     );
 
     // Clear the temporary token (Met domain opties!)
