@@ -73,7 +73,6 @@ describe('User Integration (Flows)', () => {
     });
 
     it('should return 404 if user does not exist (token valid but user deleted)', async () => {
-      // Create valid token for non-existent ID
       const fakeId = new Types.ObjectId();
       const cookie = getAuthCookie(fakeId.toString());
 
@@ -101,7 +100,7 @@ describe('User Integration (Flows)', () => {
       await request(app.getHttpServer())
         .post(`/user/favorites/${module._id.toString()}`)
         .set('Cookie', [cookie])
-        .expect(201); // Created
+        .expect(201);
 
       const updatedUser = await userModel.findById(user._id);
       expect(updatedUser).toBeDefined();

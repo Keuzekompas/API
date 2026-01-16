@@ -6,7 +6,6 @@ import { ModulesModule } from '../modules.module';
 import { AuthModule } from '../../auth/auth.module';
 import { setupIntegrationTest, teardownIntegrationTest, IntegrationTestContext } from '../../utils/tests/test-utils';
 
-// Mock Redis
 jest.mock('../../utils/redis');
 
 describe('Modules Integration (Flows)', () => {
@@ -32,7 +31,6 @@ describe('Modules Integration (Flows)', () => {
   });
 
   const getAuthCookie = () => {
-    // Generate a generic valid token
     const token = jwtService.sign({ userId: '507f1f77bcf86cd799439011' }, { secret: process.env.JWT_SECRET });
     return `token=${token}`;
   };
@@ -72,7 +70,6 @@ describe('Modules Integration (Flows)', () => {
       await moduleModel.create({ ...defaultModule, name_en: 'Module A', name_nl: 'Module A' });
       await moduleModel.create({ ...defaultModule, name_en: 'Module B', name_nl: 'Module B', location: 'Den Bosch' });
 
-      // Verification
       const count = await moduleModel.countDocuments();
       expect(count).toBe(2);
 
@@ -136,7 +133,6 @@ describe('Modules Integration (Flows)', () => {
   describe('3. Module detail ophalen (GET /modules/:id)', () => {
     it('should return 404 for unknown ID', async () => {
       const cookie = getAuthCookie();
-      // Use a valid ObjectId that doesn't exist
       await request(app.getHttpServer())
         .get('/modules/507f1f77bcf86cd799439011')
         .set('Cookie', [cookie])

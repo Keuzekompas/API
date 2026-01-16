@@ -14,7 +14,7 @@ jest.mock('../../utils/penalty', () => ({
   PenaltyManager: {
     getBlockData: jest.fn().mockResolvedValue({ isBlocked: false }),
     resetPenalty: jest.fn(),
-    applyPenalty: jest.fn().mockResolvedValue(60), // Return dummy penalty time
+    applyPenalty: jest.fn().mockResolvedValue(60),
     formatTime: jest.fn().mockReturnValue('1m'),
   },
 })); 
@@ -49,13 +49,12 @@ describe('Auth Integration (Flows)', () => {
 
   describe('5. Inloggen/JWT/2FA flow (POST /auth/login & /verify-2fa)', () => {
     it('should trigger 2FA flow with valid credentials', async () => {
-      // AuthDto forces lowercase, so we must use lowercase password to match
       const password = 'password123!!';
       const hashedPassword = await bcrypt.hash(password, 10);
       const user = new userModel({
         email: 'test-2fa@student.avans.nl',
         password: hashedPassword,
-        name: 'Test', // Simplified name to pass validation
+        name: 'Test',
         is2FAEnabled: true,
         trustedIPs: [],
       });
@@ -72,14 +71,14 @@ describe('Auth Integration (Flows)', () => {
     });
 
     it('should complete 2FA verification with valid code', async () => {
-      const user = await userModel.create({ email: 'test-verify@student.avans.nl', password: 'password123', name: 'TestUser' }); // Simplified name
+      const user = await userModel.create({ email: 'test-verify@student.avans.nl', password: 'password123', name: 'TestUser' });
       const tempToken = jwtService.sign({ userId: user._id.toString(), isTemp: true }, { secret: process.env.JWT_SECRET });
 
-      mockedRedisInstance.get.mockResolvedValue('123456'); // Mock that the correct code is in Redis
+      mockedRedisInstance.get.mockResolvedValue('123456');
 
       const response = await request(app.getHttpServer())
         .post('/auth/verify-2fa')
-        .set('Cookie', [`temp_token=${tempToken}`]) // Controller looks for cookie
+        .set('Cookie', [`temp_token=${tempToken}`])
         .send({ code: '123456' })
         .expect(200);
 
@@ -89,19 +88,19 @@ describe('Auth Integration (Flows)', () => {
     });
 
     it('should fail 2FA with invalid code', async () => {
-       const user = await userModel.create({ email: 'test-fail@student.avans.nl', password: 'password123', name: 'TestUserFail' }); // Simplified name
+       const user = await userModel.create({ email: 'test-fail@student.avans.nl', password: 'password123', name: 'TestUserFail' });
        const tempToken = jwtService.sign({ userId: user._id.toString(), isTemp: true }, { secret: process.env.JWT_SECRET });
 
-       mockedRedisInstance.get.mockResolvedValue('123456'); // Correct code
+       mockedRedisInstance.get.mockResolvedValue('123456');
        mockedRedisInstance.del.mockResolvedValue(1);
 
        const response = await request(app.getHttpServer())
         .post('/auth/verify-2fa')
         .set('Cookie', [`temp_token=${tempToken}`])
-        .send({ code: '654321' }); // Incorrect code
+        .send({ code: '654321' });
 
        expect(response.status).toBe(401);
-       expect(response.body.message).toBe('Invalid or expired 2FA code'); // Corrected assertion
+       expect(response.body.message).toBe('Invalid or expired 2FA code');
     });
   });
 });
