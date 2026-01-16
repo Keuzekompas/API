@@ -1,5 +1,5 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
-import { Model , QueryFilter } from 'mongoose';
+import { Model, QueryFilter } from 'mongoose';
 import { Module } from './module.interface';
 import { ModuleDetailDto } from './dtos/module-response.dto';
 import { GetModulesQueryDto } from './dtos/get-modules-query.dto';
@@ -44,7 +44,17 @@ export class ModulesService {
     const skip = (page - 1) * limit;
 
     const [modules, total] = await Promise.all([
-      this.moduleModel.find(filter).skip(skip).limit(limit).exec(),
+      this.moduleModel
+        .find(filter)
+        .select(
+          lang === 'nl'
+            ? 'name_nl description_nl studycredit location'
+            : 'name_en description_en studycredit location',
+        )
+        .skip(skip)
+        .limit(limit)
+        .lean()
+        .exec(),
       this.moduleModel.countDocuments(filter).exec(),
     ]);
 
