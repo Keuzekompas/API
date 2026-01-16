@@ -27,11 +27,7 @@ export class UserRepository {
   }
 
   async findByEmail(email: string): Promise<UserDocument | null> {
-    return this.userModel
-      .findOne({ email })
-      .select('+id')
-      .lean<UserDocument>()
-      .exec();
+    return this.userModel.findOne({ email }).lean<UserDocument>().exec();
   }
 
   async addFavorite(
@@ -44,7 +40,7 @@ export class UserRepository {
         { $addToSet: { favoriteModules: moduleId } },
         { new: true },
       )
-      .select('+id')
+      .select('id')
       .lean<UserInterface>()
       .exec();
   }
@@ -59,7 +55,7 @@ export class UserRepository {
         { $pull: { favoriteModules: moduleId } },
         { new: true },
       )
-      .select('+id')
+      .select('id')
       .lean<UserInterface>()
       .exec();
   }
