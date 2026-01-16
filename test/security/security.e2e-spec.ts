@@ -3,36 +3,27 @@ import { INestApplication, ValidationPipe, UnauthorizedException, CanActivate, E
 import request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { redisInstance } from '../../src/utils/redis';
-import { UserService } from '../../src/user/user.service';
-import { UserInterface } from 'src/user/user.interface';
-import { AuthGuard } from '../../src/auth/guards/auth.guard';
+import mongoose from 'mongoose';
+import { MongoMemoryServer } from 'mongodb-memory-server';
 
 describe('Security & Penetration Tests', () => {
   let app: INestApplication;
-  let userService: UserService;
-  let mockAuthGuard: CanActivate;
+  let mongod: MongoMemoryServer;
 
   beforeAll(async () => {
-    mockAuthGuard = {
-      canActivate: jest.fn(),
-    };
+    mongod = await MongoMemoryServer.create();
+    const uri = mongod.getUri();
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
-      .overrideGuard(AuthGuard)
-      .useValue(mockAuthGuard)
-      .overrideProvider('DATABASE_CONNECTION')
-      .useValue({
-        model: jest.fn(() => ({
-          findOne: jest.fn().mockReturnThis(),
-          findById: jest.fn().mockReturnThis(),
-          select: jest.fn().mockReturnThis(),
-          lean: jest.fn().mockReturnThis(),
-          exec: jest.fn(),
-        })),
-      })
-      .compile();
+    .overrideProvider('DATABASE_CONNECTION')
+    .useFactory({
+      factory: async () => {
+        return await mongoose.connect(uri);
+      },
+    })
+    .compile();
 
     app = moduleFixture.createNestApplication();
     
@@ -51,6 +42,8 @@ describe('Security & Penetration Tests', () => {
   });
 
   afterAll(async () => {
+    await mongoose.disconnect();
+    if (mongod) await mongod.stop();
     await app.close();
     await redisInstance.quit(); // Close Redis connection to prevent hangs
   });
