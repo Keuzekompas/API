@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
-import { Model, Types } from 'mongoose';
+import mongoose, { Model, Types } from 'mongoose';
 import cookieParser from 'cookie-parser';
 import { JwtService } from '@nestjs/jwt';
 import { UserModule } from '../user.module';
@@ -9,6 +9,7 @@ import { DatabaseModule } from '../../database/database.module';
 import { UserDocument } from '../user.schema';
 import { ModulesModule } from '../../modules/modules.module';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { MongoMemoryServer } from 'mongodb-memory-server';
 
 // Mock Redis
 jest.mock('../../utils/redis', () => ({
@@ -31,9 +32,12 @@ describe('User Integration (Flows)', () => {
   let userModel: Model<UserDocument>;
   let moduleModel: Model<any>;
   let jwtService: JwtService;
+  let mongod: MongoMemoryServer;
 
   beforeAll(async () => {
     process.env.JWT_SECRET = 'test-secret'; // Ensure secret is set
+    mongod = await MongoMemoryServer.create();
+    const uri = mongod.getUri();
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
@@ -43,18 +47,25 @@ describe('User Integration (Flows)', () => {
         ThrottlerModule.forRoot({
           throttlers: [
             { name: 'short', ttl: 10000, limit: 100 },
-            { name: 'long', ttl: 900000, limit: 1000 },
-            { name: 'loginAttempts', ttl: 60000, limit: 100 },
-            { name: 'verify2fa', ttl: 60000, limit: 100 },
+            { name: 'long', ttl: 900000, limit: 1000 }, 
+            { name: 'loginAttempts', ttl: 60000, limit: 100 }, 
+            { name: 'verify2fa', ttl: 60000, limit: 100 }, 
           ],
         }),
       ],
-    }).compile();
+    })
+    .overrideProvider('DATABASE_CONNECTION')
+    .useFactory({
+      factory: async () => {
+        return await mongoose.connect(uri);
+      },
+    })
+    .compile();
 
     app = moduleFixture.createNestApplication();
-    app.use(cookieParser()); // Critical for AuthGuard
+    app.use(cookieParser());
     app.useGlobalPipes(new ValidationPipe());
-    
+
     userModel = moduleFixture.get<Model<UserDocument>>('USER_MODEL');
     moduleModel = moduleFixture.get<Model<any>>('MODULE_MODEL');
     jwtService = moduleFixture.get<JwtService>(JwtService);
@@ -63,6 +74,8 @@ describe('User Integration (Flows)', () => {
   }, 30000);
 
   afterAll(async () => {
+    await mongoose.disconnect();
+    if (mongod) await mongod.stop();
     await app.close();
   });
 

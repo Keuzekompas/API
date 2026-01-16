@@ -1,13 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
-import { Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import cookieParser from 'cookie-parser';
 import { JwtService } from '@nestjs/jwt';
 import { ModulesModule } from '../modules.module';
 import { AuthModule } from '../../auth/auth.module';
 import { DatabaseModule } from '../../database/database.module';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { MongoMemoryServer } from 'mongodb-memory-server';
 
 // Mock Redis
 jest.mock('../../utils/redis', () => ({
@@ -29,9 +30,12 @@ describe('Modules Integration (Flows)', () => {
   let app: INestApplication;
   let moduleModel: Model<any>;
   let jwtService: JwtService;
+  let mongod: MongoMemoryServer;
 
   beforeAll(async () => {
     process.env.JWT_SECRET = 'test-secret';
+    mongod = await MongoMemoryServer.create();
+    const uri = mongod.getUri();
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
@@ -47,7 +51,14 @@ describe('Modules Integration (Flows)', () => {
           ],
         }),
       ],
-    }).compile();
+    })
+    .overrideProvider('DATABASE_CONNECTION')
+    .useFactory({
+      factory: async () => {
+        return await mongoose.connect(uri);
+      },
+    })
+    .compile();
 
     app = moduleFixture.createNestApplication();
     app.use(cookieParser());
@@ -60,6 +71,8 @@ describe('Modules Integration (Flows)', () => {
   }, 30000);
 
   afterAll(async () => {
+    await mongoose.disconnect();
+    if (mongod) await mongod.stop();
     await app.close();
   });
 

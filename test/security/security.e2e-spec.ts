@@ -3,14 +3,27 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { redisInstance } from '../../src/utils/redis';
+import mongoose from 'mongoose';
+import { MongoMemoryServer } from 'mongodb-memory-server';
 
 describe('Security & Penetration Tests', () => {
   let app: INestApplication;
+  let mongod: MongoMemoryServer;
 
   beforeAll(async () => {
+    mongod = await MongoMemoryServer.create();
+    const uri = mongod.getUri();
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+    .overrideProvider('DATABASE_CONNECTION')
+    .useFactory({
+      factory: async () => {
+        return await mongoose.connect(uri);
+      },
+    })
+    .compile();
 
     app = moduleFixture.createNestApplication();
     
@@ -27,6 +40,8 @@ describe('Security & Penetration Tests', () => {
   });
 
   afterAll(async () => {
+    await mongoose.disconnect();
+    if (mongod) await mongod.stop();
     await app.close();
     await redisInstance.quit(); // Close Redis connection to prevent hangs
   });

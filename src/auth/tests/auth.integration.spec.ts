@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
-import { Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import cookieParser from 'cookie-parser';
 import { AuthModule } from '../auth.module';
 import { UserModule } from '../../user/user.module';
@@ -11,6 +11,7 @@ import * as bcrypt from 'bcrypt';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { JwtService } from '@nestjs/jwt';
 import { redisInstance } from '../../utils/redis';
+import { MongoMemoryServer } from 'mongodb-memory-server';
 
 // Mock PenaltyManager to avoid 429s during tests completely
 jest.mock('../../utils/penalty', () => ({
@@ -42,12 +43,15 @@ describe('Auth Integration (Flows)', () => {
   let app: INestApplication;
   let userModel: Model<UserDocument>;
   let jwtService: JwtService;
+  let mongod: MongoMemoryServer;
 
   const mockRedisGet = redisInstance.get as jest.Mock;
   const mockRedisSetEx = redisInstance.setex as jest.Mock;
 
   beforeAll(async () => {
     process.env.JWT_SECRET = 'test-secret';
+    mongod = await MongoMemoryServer.create();
+    const uri = mongod.getUri();
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
@@ -64,7 +68,14 @@ describe('Auth Integration (Flows)', () => {
             // force memory storage
           }),
       ],
-    }).compile();
+    })
+    .overrideProvider('DATABASE_CONNECTION')
+    .useFactory({
+      factory: async () => {
+        return await mongoose.connect(uri);
+      },
+    })
+    .compile();
 
     app = moduleFixture.createNestApplication();
     app.use(cookieParser());
@@ -77,6 +88,8 @@ describe('Auth Integration (Flows)', () => {
   }, 30000);
 
   afterAll(async () => {
+    await mongoose.disconnect();
+    if (mongod) await mongod.stop();
     await app.close();
   });
 
