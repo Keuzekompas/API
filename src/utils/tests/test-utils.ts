@@ -47,7 +47,8 @@ export const setupIntegrationTest = async (imports: any[] = []): Promise<Integra
   .overrideProvider('DATABASE_CONNECTION')
   .useFactory({
     factory: async () => {
-      return await mongoose.connect(uri);
+        const connection = await mongoose.connect(uri);
+        return connection;
     },
   });
 
@@ -62,8 +63,18 @@ export const setupIntegrationTest = async (imports: any[] = []): Promise<Integra
   return { app, moduleFixture, mongod };
 };
 
+import { redisInstance } from '../redis';
+
 export const teardownIntegrationTest = async (context: IntegrationTestContext) => {
+    // Force close any lingering connections
     await mongoose.disconnect();
+    // Explicitly stop the in-memory server
     if (context.mongod) await context.mongod.stop();
+    
+    // Close the global Redis instance
+    if (redisInstance.status === 'ready' || redisInstance.status === 'connecting') {
+        await redisInstance.quit();
+    }
+    
     await context.app.close();
 };
