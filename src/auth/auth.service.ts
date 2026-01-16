@@ -33,10 +33,6 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    // Login successful (credentials wise), reset throttle penalty
-    await PenaltyManager.resetPenalty(`ip:${ip}`);
-    await PenaltyManager.resetPenalty(`account:${email.toLowerCase()}`);
-
     // Generate 2FA code
     const code = crypto.randomInt(100000, 999999).toString();
     const userId = user._id.toString();
@@ -59,7 +55,7 @@ export class AuthService {
     };
   }
 
-  async verifyTwoFactor(tempToken: string, code: string): Promise<LoginResponse> {
+  async verifyTwoFactor(tempToken: string, code: string, ip: string): Promise<LoginResponse> {
     let payload: { userId: string; isTemp: boolean };
     try {
       payload = this.jwtService.verify(tempToken);
@@ -97,6 +93,10 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
+
+    // Login fully successful, reset throttle penalty
+    await PenaltyManager.resetPenalty(`ip:${ip}`);
+    await PenaltyManager.resetPenalty(`account:${user.email.toLowerCase()}`);
 
     // Issue full token
     const token = this.jwtService.sign({ userId, name: user.name });
