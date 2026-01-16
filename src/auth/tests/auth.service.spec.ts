@@ -130,7 +130,7 @@ describe('AuthService', () => {
       mockUserRepository.findById.mockResolvedValue(mockUser);
 
       // Act
-      const result = await service.verifyTwoFactor(tempToken, code);
+      const result = await service.verifyTwoFactor(tempToken, code, '127.0.0.1');
 
       // Assert
       expect(result).toHaveProperty('token');
@@ -151,7 +151,7 @@ describe('AuthService', () => {
       (redisInstance.get as jest.Mock).mockResolvedValue('123456');
 
       await expect(
-        service.verifyTwoFactor(tempToken, '000000'),
+        service.verifyTwoFactor(tempToken, '000000', '127.0.0.1'),
       ).rejects.toThrow(UnauthorizedException);
     });
   });
