@@ -21,7 +21,7 @@ export class UserRepository {
   async findWithFavorites(id: string): Promise<UserInterface | null> {
     return this.userModel
       .findById(id)
-      .select('-password -__v')
+      .select('favoriteModules')
       .lean<UserInterface>()
       .exec();
   }
@@ -34,26 +34,32 @@ export class UserRepository {
       .exec();
   }
 
-  async addFavorite(userId: string, moduleId: string): Promise<UserInterface | null> {
+  async addFavorite(
+    userId: string,
+    moduleId: string,
+  ): Promise<UserInterface | null> {
     return this.userModel
       .findByIdAndUpdate(
         userId,
         { $addToSet: { favoriteModules: moduleId } },
-        { new: true }
+        { new: true },
       )
-      .select('-password -__v')
+      .select('+id')
       .lean<UserInterface>()
       .exec();
   }
 
-  async removeFavorite(userId: string, moduleId: string): Promise<UserInterface | null> {
+  async removeFavorite(
+    userId: string,
+    moduleId: string,
+  ): Promise<UserInterface | null> {
     return this.userModel
       .findByIdAndUpdate(
         userId,
         { $pull: { favoriteModules: moduleId } },
-        { new: true }
+        { new: true },
       )
-      .select('-password -__v')
+      .select('+id')
       .lean<UserInterface>()
       .exec();
   }
