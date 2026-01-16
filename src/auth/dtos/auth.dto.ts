@@ -18,7 +18,7 @@ export class AuthDto {
   @IsNotEmpty({ message: 'Email cant be empty' })
   @IsString()
   @IsEmail({}, { message: 'Invalid email or password' })
-  @Matches(/^[a-zA-Z0-9._%+-]+@student\.avans\.nl$/, {
+  @Matches(/^[a-zA-Z0-9._%+-]+@(student\.)?avans\.nl$/, {
     message: 'Invalid email or password',
   })
   email: string;
