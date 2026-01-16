@@ -5,13 +5,11 @@ import mongoose, { Model } from 'mongoose';
 import cookieParser from 'cookie-parser';
 import { AuthModule } from '../auth.module';
 import { UserModule } from '../../user/user.module';
-import { DatabaseModule } from '../../database/database.module';
 import { UserDocument } from '../../user/user.schema';
 import * as bcrypt from 'bcrypt';
-import { ThrottlerModule } from '@nestjs/throttler';
 import { JwtService } from '@nestjs/jwt';
 import { redisInstance } from '../../utils/redis';
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import { setupIntegrationTest, teardownIntegrationTest, IntegrationTestContext } from '../../../test/test-utils';
 
 // Mock PenaltyManager to avoid 429s during tests completely
 jest.mock('../../utils/penalty', () => ({
@@ -40,57 +38,24 @@ jest.mock('../../utils/redis', () => ({
 }));
 
 describe('Auth Integration (Flows)', () => {
+  let ctx: IntegrationTestContext;
   let app: INestApplication;
   let userModel: Model<UserDocument>;
   let jwtService: JwtService;
-  let mongod: MongoMemoryServer;
 
   const mockRedisGet = redisInstance.get as jest.Mock;
   const mockRedisSetEx = redisInstance.setex as jest.Mock;
 
   beforeAll(async () => {
-    process.env.JWT_SECRET = 'test-secret';
-    mongod = await MongoMemoryServer.create();
-    const uri = mongod.getUri();
-
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [
-        DatabaseModule,
-        AuthModule,
-        UserModule,
-        ThrottlerModule.forRoot({
-            throttlers: [
-              { name: 'short', ttl: 10000, limit: 100 }, 
-              { name: 'long', ttl: 900000, limit: 1000 }, 
-              { name: 'loginAttempts', ttl: 60000, limit: 100 }, 
-              { name: 'verify2fa', ttl: 60000, limit: 100 }, 
-            ],
-            // force memory storage
-          }),
-      ],
-    })
-    .overrideProvider('DATABASE_CONNECTION')
-    .useFactory({
-      factory: async () => {
-        return await mongoose.connect(uri);
-      },
-    })
-    .compile();
-
-    app = moduleFixture.createNestApplication();
-    app.use(cookieParser());
-    app.useGlobalPipes(new ValidationPipe());
+    ctx = await setupIntegrationTest([AuthModule, UserModule]);
+    app = ctx.app;
     
-    userModel = moduleFixture.get<Model<UserDocument>>('USER_MODEL');
-    jwtService = moduleFixture.get<JwtService>(JwtService);
-
-    await app.init();
+    userModel = ctx.moduleFixture.get<Model<UserDocument>>('USER_MODEL');
+    jwtService = ctx.moduleFixture.get<JwtService>(JwtService);
   }, 30000);
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    if (mongod) await mongod.stop();
-    await app.close();
+    await teardownIntegrationTest(ctx);
   });
 
   beforeEach(async () => {

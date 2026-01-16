@@ -6,9 +6,7 @@ import cookieParser from 'cookie-parser';
 import { JwtService } from '@nestjs/jwt';
 import { ModulesModule } from '../modules.module';
 import { AuthModule } from '../../auth/auth.module';
-import { DatabaseModule } from '../../database/database.module';
-import { ThrottlerModule } from '@nestjs/throttler';
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import { setupIntegrationTest, teardownIntegrationTest, IntegrationTestContext } from '../../../test/test-utils';
 
 // Mock Redis
 jest.mock('../../utils/redis', () => ({
@@ -27,53 +25,21 @@ jest.mock('../../utils/redis', () => ({
 }));
 
 describe('Modules Integration (Flows)', () => {
+  let ctx: IntegrationTestContext;
   let app: INestApplication;
   let moduleModel: Model<any>;
   let jwtService: JwtService;
-  let mongod: MongoMemoryServer;
 
   beforeAll(async () => {
-    process.env.JWT_SECRET = 'test-secret';
-    mongod = await MongoMemoryServer.create();
-    const uri = mongod.getUri();
-
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [
-        DatabaseModule,
-        ModulesModule,
-        AuthModule, // Used for AuthGuard
-        ThrottlerModule.forRoot({
-          throttlers: [
-            { name: 'short', ttl: 10000, limit: 100 }, 
-            { name: 'long', ttl: 900000, limit: 1000 }, 
-            { name: 'loginAttempts', ttl: 60000, limit: 100 }, 
-            { name: 'verify2fa', ttl: 60000, limit: 100 }, 
-          ],
-        }),
-      ],
-    })
-    .overrideProvider('DATABASE_CONNECTION')
-    .useFactory({
-      factory: async () => {
-        return await mongoose.connect(uri);
-      },
-    })
-    .compile();
-
-    app = moduleFixture.createNestApplication();
-    app.use(cookieParser());
-    app.useGlobalPipes(new ValidationPipe({ transform: true })); // Transform for query DTOs
+    ctx = await setupIntegrationTest([ModulesModule, AuthModule]);
+    app = ctx.app;
     
-    moduleModel = moduleFixture.get<Model<any>>('MODULE_MODEL');
-    jwtService = moduleFixture.get<JwtService>(JwtService);
-
-    await app.init();
+    moduleModel = ctx.moduleFixture.get<Model<any>>('MODULE_MODEL');
+    jwtService = ctx.moduleFixture.get<JwtService>(JwtService);
   }, 30000);
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    if (mongod) await mongod.stop();
-    await app.close();
+    await teardownIntegrationTest(ctx);
   });
 
   beforeEach(async () => {
