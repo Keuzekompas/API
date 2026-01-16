@@ -56,10 +56,11 @@ describe('ModulesService', () => {
       const result = [mockModule];
       const query: GetModulesQueryDto = { lang: 'en', page: 1, limit: 10 };
 
-      // Mock chain: find() -> skip() -> limit() -> exec()
       const mockChain = {
+        select: jest.fn().mockReturnThis(),
         skip: jest.fn().mockReturnThis(),
         limit: jest.fn().mockReturnThis(),
+        lean: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue(result),
       };
       mockModuleModel.find.mockReturnValue(mockChain);
@@ -83,6 +84,10 @@ describe('ModulesService', () => {
 
       expect(modules).toEqual(expected);
       expect(mockModuleModel.find).toHaveBeenCalledWith({});
+      expect(mockChain.select).toHaveBeenCalledWith(
+        'name_en description_en studycredit location',
+      );
+      expect(mockChain.lean).toHaveBeenCalled();
       expect(mockChain.skip).toHaveBeenCalledWith(0);
       expect(mockChain.limit).toHaveBeenCalledWith(10);
     });
@@ -98,8 +103,10 @@ describe('ModulesService', () => {
       };
 
       const mockChain = {
+        select: jest.fn().mockReturnThis(),
         skip: jest.fn().mockReturnThis(),
         limit: jest.fn().mockReturnThis(),
+        lean: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue([mockModule]),
       };
       mockModuleModel.find.mockReturnValue(mockChain);
@@ -113,7 +120,10 @@ describe('ModulesService', () => {
       };
 
       expect(mockModuleModel.find).toHaveBeenCalledWith(expectedFilter);
-      expect(mockChain.skip).toHaveBeenCalledWith(5); // (page 2 - 1) * 5
+      expect(mockChain.select).toHaveBeenCalledWith(
+        'name_nl description_nl studycredit location',
+      );
+      expect(mockChain.skip).toHaveBeenCalledWith(5);
       expect(mockChain.limit).toHaveBeenCalledWith(5);
     });
   });
