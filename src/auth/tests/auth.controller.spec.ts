@@ -89,6 +89,7 @@ describe('AuthController', () => {
         mockRequest,
         mockResponse,
         verifyDto,
+        '127.0.0.1'
       );
 
       expect(mockResponse.clearCookie).toHaveBeenCalledWith(
@@ -107,9 +108,14 @@ describe('AuthController', () => {
       const mockRequest = { cookies: {} } as unknown as Request;
 
       await expect(
-        controller.verify2FA(mockRequest, mockResponse, {
-          code: '123',
-        }),
+        controller.verify2FA(
+          mockRequest,
+          mockResponse,
+          {
+            code: '123456',
+          },
+          '127.0.0.1',
+        ),
       ).rejects.toThrow(UnauthorizedException);
     });
   });
