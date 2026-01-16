@@ -69,7 +69,7 @@ export class AuthController {
       // Remove sensitive data from response body
       const { tempToken, ...safeResponse } = response;
       // Return tempToken in body as well for clients that don't support cookies well
-      return createJsonResponse(200, '2FA required', { ...safeResponse, tempToken });
+      return createJsonResponse(200, '2FA required', { ...safeResponse });
     }
 
     setTokenCookie(res, response.token);
