@@ -5,10 +5,18 @@ import { AppModule } from '../../src/app.module';
 import { redisInstance } from '../../src/utils/redis';
 import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
+import { UserService } from '../../src/user/user.service';
+import { UserInterface } from '../../src/user/user.interface';
+import { AuthGuard } from '../../src/auth/guards/auth.guard';
 
 describe('Security & Penetration Tests', () => {
   let app: INestApplication;
   let mongod: MongoMemoryServer;
+  let userService: UserService;
+
+  const mockAuthGuard: CanActivate = {
+    canActivate: jest.fn(),
+  };
 
   beforeAll(async () => {
     mongod = await MongoMemoryServer.create();
@@ -23,6 +31,8 @@ describe('Security & Penetration Tests', () => {
         return await mongoose.connect(uri);
       },
     })
+    .overrideGuard(AuthGuard)
+    .useValue(mockAuthGuard)
     .compile();
 
     app = moduleFixture.createNestApplication();
