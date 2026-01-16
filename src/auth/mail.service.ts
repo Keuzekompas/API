@@ -19,14 +19,6 @@ export class MailService {
   }
 
   async sendTwoFactorCode(email: string, code: string) {
-    const cooldownKey = `mail_cooldown:${email}`;
-
-    const result = await redisInstance.set(cooldownKey, 'true', 'EX', 10, 'NX');
-
-    if (result !== 'OK') {
-      return;
-    }
-
     if (
       !process.env.MAIL_HOST ||
       process.env.MAIL_HOST === 'smtp.example.com'
@@ -146,7 +138,6 @@ export class MailService {
         html: htmlContent,
       });
     } catch (error) {
-      await redisInstance.del(cooldownKey);
       throw error;
     }
   }
