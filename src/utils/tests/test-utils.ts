@@ -2,7 +2,7 @@ import { Test, TestingModule, TestingModuleBuilder } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
-import { DatabaseModule } from '../src/database/database.module';
+import { DatabaseModule } from '../../database/database.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import cookieParser from 'cookie-parser';
 

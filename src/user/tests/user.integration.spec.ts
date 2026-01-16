@@ -1,29 +1,14 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import mongoose, { Model, Types } from 'mongoose';
-import cookieParser from 'cookie-parser';
+import { Model, Types } from 'mongoose';
 import { JwtService } from '@nestjs/jwt';
 import { UserModule } from '../user.module';
 import { UserDocument } from '../user.schema';
 import { ModulesModule } from '../../modules/modules.module';
-import { setupIntegrationTest, teardownIntegrationTest, IntegrationTestContext } from '../../../test/test-utils';
+import { setupIntegrationTest, teardownIntegrationTest, IntegrationTestContext } from '../../utils/tests/test-utils';
 
 // Mock Redis
-jest.mock('../../utils/redis', () => ({
-  redisInstance: {
-    get: jest.fn(),
-    set: jest.fn(),
-    del: jest.fn(),
-    on: jest.fn(),
-    quit: jest.fn(),
-    disconnect: jest.fn(),
-    ttl: jest.fn(),
-    incr: jest.fn(),
-    expire: jest.fn(),
-    setex: jest.fn(),
-  },
-}));
+jest.mock('../../utils/redis' );
 
 describe('User Integration (Flows)', () => {
   let ctx: IntegrationTestContext;
