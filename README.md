@@ -39,6 +39,7 @@ JWT_SECRET=verander_dit_naar_een_veilig_geheim
 # Redis (Cache)
 REDIS_HOST=localhost
 REDIS_PORT=6379
+REDIS_USERNAME=user
 REDIS_PASSWORD=
 
 # Email (SMTP)
