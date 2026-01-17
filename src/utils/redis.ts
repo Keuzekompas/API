@@ -9,4 +9,10 @@ export const redisInstance = new Redis({
   port: Number(process.env.REDIS_PORT) || 6379,
   password: process.env.REDIS_PASSWORD || undefined,
   lazyConnect: isTest, // Prevent immediate connection in tests
+  tls:
+    process.env.REDIS_TLS === 'true'
+      ? {
+          rejectUnauthorized: true,
+        }
+      : undefined,
 });
