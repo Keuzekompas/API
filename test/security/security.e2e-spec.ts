@@ -1,5 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe, UnauthorizedException, CanActivate, ExecutionContext } from '@nestjs/common';
+import {
+  INestApplication,
+  ValidationPipe,
+  UnauthorizedException,
+  CanActivate,
+  ExecutionContext,
+} from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { redisInstance } from '../../src/utils/redis';
@@ -25,18 +31,18 @@ describe('Security & Penetration Tests', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
-    .overrideProvider('DATABASE_CONNECTION')
-    .useFactory({
-      factory: async () => {
-        return await mongoose.connect(uri);
-      },
-    })
-    .overrideGuard(AuthGuard)
-    .useValue(mockAuthGuard)
-    .compile();
+      .overrideProvider('DATABASE_CONNECTION')
+      .useFactory({
+        factory: async () => {
+          return await mongoose.connect(uri);
+        },
+      })
+      .overrideGuard(AuthGuard)
+      .useValue(mockAuthGuard)
+      .compile();
 
     app = moduleFixture.createNestApplication();
-    
+
     // Ensure the validation pipe is applied globally, mirroring main.ts
     app.useGlobalPipes(
       new ValidationPipe({
@@ -52,10 +58,13 @@ describe('Security & Penetration Tests', () => {
   });
 
   afterAll(async () => {
+    await mongoose.connection.close();
     await mongoose.disconnect();
     if (mongod) await mongod.stop();
     await app.close();
-    await redisInstance.quit(); // Close Redis connection to prevent hangs
+    if (redisInstance) {
+      await redisInstance.quit();
+    }
   });
 
   beforeEach(async () => {
@@ -112,9 +121,7 @@ describe('Security & Penetration Tests', () => {
       (mockAuthGuard.canActivate as jest.Mock).mockImplementation(() => {
         throw new UnauthorizedException();
       });
-      await request(app.getHttpServer())
-        .get('/user/profile')
-        .expect(401); // Unauthorized
+      await request(app.getHttpServer()).get('/user/profile').expect(401); // Unauthorized
     });
 
     it('should deny access with an invalid/forged token', async () => {
@@ -128,11 +135,13 @@ describe('Security & Penetration Tests', () => {
     });
 
     it('should allow access with a valid token', async () => {
-      (mockAuthGuard.canActivate as jest.Mock).mockImplementation((context: ExecutionContext) => {
-        const req = context.switchToHttp().getRequest();
-        req.user = { userId: '507f1f77bcf86cd799439011' };
-        return true;
-      });
+      (mockAuthGuard.canActivate as jest.Mock).mockImplementation(
+        (context: ExecutionContext) => {
+          const req = context.switchToHttp().getRequest();
+          req.user = { userId: '507f1f77bcf86cd799439011' };
+          return true;
+        },
+      );
       const user: UserInterface = {
         id: '507f1f77bcf86cd799439011',
         email: 'test@student.avans.nl',
@@ -140,9 +149,7 @@ describe('Security & Penetration Tests', () => {
         favoriteModules: [],
       };
       jest.spyOn(userService, 'findById').mockResolvedValue(user);
-      await request(app.getHttpServer())
-        .get('/user/profile')
-        .expect(200);
+      await request(app.getHttpServer()).get('/user/profile').expect(200);
     });
   });
 
@@ -155,7 +162,7 @@ describe('Security & Penetration Tests', () => {
       // Create a token that LOOKS valid but is signed with 'attacker-secret' instead of the real one
       const forgedToken = jwt.sign(
         { userId: '507f1f77bcf86cd799439011' }, // Random valid-looking ObjectId
-        'attacker-secret'
+        'attacker-secret',
       );
 
       await request(app.getHttpServer())
@@ -173,7 +180,7 @@ describe('Security & Penetration Tests', () => {
       const noneToken = jwt.sign(
         { userId: '507f1f77bcf86cd799439011' },
         null, // No secret
-        { algorithm: 'none' }
+        { algorithm: 'none' },
       );
 
       await request(app.getHttpServer())
@@ -232,7 +239,7 @@ describe('Security & Penetration Tests', () => {
       // Mock a valid temp token
       const tempToken = jwt.sign(
         { userId: '507f1f77bcf86cd799439011', isTemp: true },
-        process.env.JWT_SECRET || 'secret' // Use the same secret as the app
+        process.env.JWT_SECRET || 'secret', // Use the same secret as the app
       );
 
       await request(app.getHttpServer())
