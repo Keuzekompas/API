@@ -5,6 +5,7 @@ import { AppModule } from './../src/app.module';
 import helmet from 'helmet';
 import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
+import { redisInstance } from 'src/utils/redis';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;
@@ -15,7 +16,13 @@ describe('AppController (e2e)', () => {
   });
 
   afterAll(async () => {
+    await mongoose.connection.close();
+    await mongoose.disconnect();
     if (mongod) await mongod.stop();
+    await app.close();
+    if (redisInstance) {
+      await redisInstance.quit();
+    }
   });
 
   beforeEach(async () => {
@@ -23,13 +30,13 @@ describe('AppController (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
-    .overrideProvider('DATABASE_CONNECTION')
-    .useFactory({
-      factory: async () => {
-        return await mongoose.connect(uri);
-      },
-    })
-    .compile();
+      .overrideProvider('DATABASE_CONNECTION')
+      .useFactory({
+        factory: async () => {
+          return await mongoose.connect(uri);
+        },
+      })
+      .compile();
 
     app = moduleFixture.createNestApplication();
     app.use(helmet());
