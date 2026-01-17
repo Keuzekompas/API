@@ -5,11 +5,35 @@ on:
     branches: [ "main" ]
 
 jobs:
-  # --- JOB 1: TESTEN (Continuous Integration) ---
+  # --- JOB 1: TESTEN (Unit + E2E) ---
   test:
-    name: Run Unit Tests
-    runs-on: ubuntu-latest # Draai dit lekker in de cloud, scheelt je server CPU
+    name: Run Tests (Unit & E2E)
+    runs-on: ubuntu-latest
     
+    # SERVICE CONTAINERS:
+    # GitHub start deze op voordat je stappen beginnen.
+    # Ze zijn bereikbaar via 'localhost' op de opgegeven poorten.
+    services:
+      mongo:
+        image: mongo:6 # Gebruik dezelfde versie als je productie (ongeveer)
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -17,58 +41,65 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20' # Of de versie die jij gebruikt (18/20/22)
+          node-version: '20'
           cache: 'npm'
 
       - name: Install Dependencies
-        run: npm ci # 'ci' is sneller en strikter dan 'install' voor pipelines
+        run: npm ci
 
-      # Optioneel: Maak een dummy .env als je tests crashen zonder secrets
-      - name: Create dummy .env for tests
+      # Maak een .env die verbindt met de SERVICE containers hierboven
+      - name: Create .env for tests
         run: |
-          echo "JWT_SECRET=testsecret" > .env
+          # MongoDB (draait nu lokaal in de GitHub Service)
+          echo "MONGODB_URI=mongodb://localhost:27017/test_db" > .env
+          
+          # Redis (draait ook lokaal in de Service)
+          echo "REDIS_HOST=localhost" >> .env
+          echo "REDIS_PORT=6379" >> .env
+          
+          # Dummy secrets voor de tests
+          echo "JWT_SECRET=testsecret_voor_github_actions" >> .env
           echo "COOKIE_DOMAIN=localhost" >> .env
-          # Voeg andere vars toe als je unit tests daarom vragen
+          echo "PORT=3000" >> .env
+          echo "JWT_EXPIRES_IN=1h" >> .env
 
       - name: Run Unit Tests
         run: npm run test
-        # Wil je ook e2e tests? Gebruik dan: npm run test:e2e
-        # Let op: Voor e2e heb je vaak een tijdelijke MongoDB container nodig in deze job.
 
-  # --- JOB 2: DEPLOYEN (Continuous Deployment) ---
+      - name: Run E2E Tests
+        run: npm run test:e2e
+
+  # --- JOB 2: DEPLOYEN (Naar je Home Server) ---
   deploy:
     name: Deploy to Home Server
-    needs: test # <--- CRUCIAAL: Wacht tot 'test' geslaagd is!
+    needs: test # Wacht tot Unit EN E2E geslaagd zijn
     runs-on: self-hosted
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # STAP 1: Maak .env bestand
+      # STAP 1: Maak .env bestand (Productie gegevens)
       - name: Create .env file
         run: |
-          # --- GEHEIMEN (uit GitHub Secrets) ---
           echo "MONGODB_URI=${{ secrets.MONGO_URI }}" > .env
           echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
           echo "COOKIE_DOMAIN=${{ secrets.COOKIE_DOMAIN }}" >> .env
-
-          # --- SERVER INSTELLINGEN ---
           echo "PORT=5000" >> .env
           echo "CORS_ORIGIN=https://keuzekompas.clemens05.nl" >> .env
           echo "JWT_EXPIRES_IN=1h" >> .env
-
-          # Redis
           echo "REDIS_HOST=${{ secrets.REDIS_HOST }}" >> .env
           echo "REDIS_PORT=${{ secrets.REDIS_PORT }}" >> .env
           echo "REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}" >> .env
+          echo "REDIS_USERNAME=${{ secrets.REDIS_USERNAME }}" >> .env
 
           # Mail Instellingen
           echo "MAIL_HOST=${{ secrets.MAIL_HOST }}" >> .env
-          echo "MAIL_PORT=465" >> .env
+          echo "MAIL_PORT=587" >> .env
           echo "MAIL_PASS=${{ secrets.MAIL_PASS }}" >> .env
           echo "MAIL_USER=keuzekompas@clemens05.nl" >> .env
           echo 'MAIL_FROM=KeuzeKompas <keuzekompas@clemens05.nl>' >> .env
+          echo "NODE_ENV=${{ secrets.NODE_ENV }}" >> .env
 
       # STAP 2: Stop oude container
       - name: Stop old container
